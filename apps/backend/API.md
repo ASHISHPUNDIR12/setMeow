@@ -2,46 +2,49 @@
 
 The server uses `/auth` for login routes and `/v1` for resource routes. Sign in with an HTTP cookie. All `/v1` routes require the `accessToken` cookie. IDs in URLs and request bodies are UUID strings.
 
-| Method | Path                                          | Request body or query                        | Access                                                            |
-| ------ | --------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------- |
-| POST   | `/auth/signup`                                | `{ username, email, password }`              | Public                                                            |
-| POST   | `/auth/signin` (also `/auth/login`)           | `{ email, password }`                        | Public                                                            |
-| POST   | `/auth/signout`                               | None                                         | Clears the login cookie                                           |
-| POST   | `/v1/organization`                            | `{ name, description }`                      | Signed in; creator becomes admin                                  |
-| GET    | `/v1/organizations` (also `/v1/organization`) | None                                         | Signed in; returns own memberships and organizations              |
-| GET    | `/v1/organization/:id`                        | None                                         | Organization member                                               |
-| PUT    | `/v1/organization/:id`                        | `{ name? , description? }`                   | Admin                                                             |
-| DELETE | `/v1/organization/:id`                        | None                                         | Admin; requires boards to be deleted first                        |
-| GET    | `/v1/organization/:id/memberships`            | None                                         | Organization member                                               |
-| DELETE | `/v1/organization/:id/membership/:userId`     | None                                         | Admin or self; cannot remove last admin                           |
-| POST   | `/v1/invite`                                  | `{ email, orgId }`                           | Organization admin; recipient must have an account                |
-| GET    | `/v1/invites`                                 | None                                         | Signed in; returns own pending invitations                        |
-| POST   | `/v1/invite/:inviteId/accept`                 | None                                         | Invited user; creates their membership                            |
-| POST   | `/v1/invite/:inviteId/decline`                | None                                         | Invited user                                                      |
-| POST   | `/v1/organization/:id/board`                  | `{ title }`                                  | Organization member                                               |
-| GET    | `/v1/organization/:id/boards`                 | None                                         | Organization member                                               |
-| GET    | `/v1/organization/:id/board/:boardId`         | None                                         | Organization member                                               |
-| PUT    | `/v1/organization/:id/board/:boardId`         | `{ title }`                                  | Organization member                                               |
-| DELETE | `/v1/organization/:id/board/:boardId`         | None                                         | Admin; requires issues and sections to be deleted first           |
-| POST   | `/v1/section`                                 | `{ boardId, title }`                         | Organization member                                               |
-| GET    | `/v1/sections?boardId=:boardId`               | None                                         | Organization member                                               |
-| GET    | `/v1/section/:sectionId`                      | None                                         | Organization member                                               |
-| PUT    | `/v1/section/:sectionId`                      | `{ title }`                                  | Organization member                                               |
-| DELETE | `/v1/section/:sectionId`                      | None                                         | Organization member; requires issues to be moved or deleted first |
-| POST   | `/v1/issue`                                   | `{ boardId, sectionId, title, description }` | Organization member                                               |
-| GET    | `/v1/issues?boardId=:boardId`                 | None                                         | Organization member                                               |
-| GET    | `/v1/issue/:issueId`                          | None                                         | Organization member                                               |
-| PUT    | `/v1/issue/:issueId`                          | `{ title?, description? }`                   | Organization member                                               |
-| PUT    | `/v1/issue/:issueId/move`                     | `{ sectionId }`                              | Organization member; section must be on same board                |
-| DELETE | `/v1/issue/:issueId`                          | None                                         | Organization member; deletes comments and assignments too         |
-| GET    | `/v1/issue/:issueId/assignees`                | None                                         | Organization member                                               |
-| POST   | `/v1/issue/:issueId/assignees`                | `{ userId }`                                 | Organization member; assignee must also be a member               |
-| DELETE | `/v1/issue/:issueId/assignees/:userId`        | None                                         | Organization member                                               |
-| POST   | `/v1/comment`                                 | `{ issueId, content }`                       | Organization member; author comes from login cookie               |
-| GET    | `/v1/issue/:issueId/comments`                 | None                                         | Organization member                                               |
-| GET    | `/v1/comment/:commentId`                      | None                                         | Organization member                                               |
-| PUT    | `/v1/comment/:commentId`                      | `{ content }`                                | Author or admin                                                   |
-| DELETE | `/v1/comment/:commentId`                      | None                                         | Author or admin                                                   |
+| Method | Path                                          | Request body or query                        | Access                                                             |
+| ------ | --------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------ |
+| POST   | `/auth/signup`                                | `{ username, email, password }`              | Public                                                             |
+| POST   | `/auth/signin` (also `/auth/login`)           | `{ email, password }`                        | Public                                                             |
+| POST   | `/auth/signout`                               | None                                         | Clears the login cookie                                            |
+| GET    | `/auth/oauth/google?next=/dashboard`          | Browser redirect                             | Starts Google OAuth sign-in                                        |
+| GET    | `/auth/oauth/github?next=/dashboard`          | Browser redirect                             | Starts GitHub OAuth sign-in                                        |
+| GET    | `/auth/oauth/{google,github}/callback`        | Provider callback                            | Validates OAuth state, establishes the login cookie, and redirects |
+| POST   | `/v1/organization`                            | `{ name, description }`                      | Signed in; creator becomes admin                                   |
+| GET    | `/v1/organizations` (also `/v1/organization`) | None                                         | Signed in; returns own memberships and organizations               |
+| GET    | `/v1/organization/:id`                        | None                                         | Organization member                                                |
+| PUT    | `/v1/organization/:id`                        | `{ name? , description? }`                   | Admin                                                              |
+| DELETE | `/v1/organization/:id`                        | None                                         | Admin; requires boards to be deleted first                         |
+| GET    | `/v1/organization/:id/memberships`            | None                                         | Organization member                                                |
+| DELETE | `/v1/organization/:id/membership/:userId`     | None                                         | Admin or self; cannot remove last admin                            |
+| POST   | `/v1/invite`                                  | `{ email, orgId }`                           | Organization admin; recipient must have an account                 |
+| GET    | `/v1/invites`                                 | None                                         | Signed in; returns own pending invitations                         |
+| POST   | `/v1/invite/:inviteId/accept`                 | None                                         | Invited user; creates their membership                             |
+| POST   | `/v1/invite/:inviteId/decline`                | None                                         | Invited user                                                       |
+| POST   | `/v1/organization/:id/board`                  | `{ title }`                                  | Organization member                                                |
+| GET    | `/v1/organization/:id/boards`                 | None                                         | Organization member                                                |
+| GET    | `/v1/organization/:id/board/:boardId`         | None                                         | Organization member                                                |
+| PUT    | `/v1/organization/:id/board/:boardId`         | `{ title }`                                  | Organization member                                                |
+| DELETE | `/v1/organization/:id/board/:boardId`         | None                                         | Admin; requires issues and sections to be deleted first            |
+| POST   | `/v1/section`                                 | `{ boardId, title }`                         | Organization member                                                |
+| GET    | `/v1/sections?boardId=:boardId`               | None                                         | Organization member                                                |
+| GET    | `/v1/section/:sectionId`                      | None                                         | Organization member                                                |
+| PUT    | `/v1/section/:sectionId`                      | `{ title }`                                  | Organization member                                                |
+| DELETE | `/v1/section/:sectionId`                      | None                                         | Organization member; requires issues to be moved or deleted first  |
+| POST   | `/v1/issue`                                   | `{ boardId, sectionId, title, description }` | Organization member                                                |
+| GET    | `/v1/issues?boardId=:boardId`                 | None                                         | Organization member                                                |
+| GET    | `/v1/issue/:issueId`                          | None                                         | Organization member                                                |
+| PUT    | `/v1/issue/:issueId`                          | `{ title?, description? }`                   | Organization member                                                |
+| PUT    | `/v1/issue/:issueId/move`                     | `{ sectionId }`                              | Organization member; section must be on same board                 |
+| DELETE | `/v1/issue/:issueId`                          | None                                         | Organization member; deletes comments and assignments too          |
+| GET    | `/v1/issue/:issueId/assignees`                | None                                         | Organization member                                                |
+| POST   | `/v1/issue/:issueId/assignees`                | `{ userId }`                                 | Organization member; assignee must also be a member                |
+| DELETE | `/v1/issue/:issueId/assignees/:userId`        | None                                         | Organization member                                                |
+| POST   | `/v1/comment`                                 | `{ issueId, content }`                       | Organization member; author comes from login cookie                |
+| GET    | `/v1/issue/:issueId/comments`                 | None                                         | Organization member                                                |
+| GET    | `/v1/comment/:commentId`                      | None                                         | Organization member                                                |
+| PUT    | `/v1/comment/:commentId`                      | `{ content }`                                | Author or admin                                                    |
+| DELETE | `/v1/comment/:commentId`                      | None                                         | Author or admin                                                    |
 
 Create resources in this order: organization, board, section, issue, comment or assignment. Deletes return `409 Conflict` when a parent still has dependent resources, except deleting an issue removes its comments and assignments in one transaction.
 

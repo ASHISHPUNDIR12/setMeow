@@ -7,6 +7,8 @@ import type { DashboardState } from "./use-dashboard-state";
 import type { PendingMove } from "./board-event-types";
 import { messageOf } from "./errors";
 
+const MOVE_CONFIRMATION_TIMEOUT_MS = 6000;
+
 export function useIssueMover(
   state: DashboardState,
   socket: MutableRefObject<WebSocket | null>,
@@ -19,6 +21,7 @@ export function useIssueMover(
       moveThroughSocket(issue, targetSectionId, state, socket, pendingMoves);
       return;
     }
+    // Show the move immediately; restore the previous section if saving fails.
     state.setIssues((items) =>
       items.map((item) =>
         item.id === issueId ? { ...item, sectionId: targetSectionId } : item,
@@ -59,7 +62,7 @@ function moveThroughSocket(
       ),
     );
     state.setError("The server did not confirm that move. Try again.");
-  }, 6000);
+  }, MOVE_CONFIRMATION_TIMEOUT_MS);
   pendingMoves.current.set(requestId, {
     issueId: issue.id,
     previousSectionId: issue.sectionId,

@@ -76,6 +76,17 @@ export async function startRealtimeServer(options: { port?: number } = {}) {
   const rooms = new Map<string, Set<Session>>();
   const userRooms = new Map<string, Set<UserSession>>();
   const server = createServer((_req, res) => {
+    if (_req.method === "GET" && _req.url === "/healthz") {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ status: "ok" }));
+      return;
+    }
+    if (_req.method === "GET" && _req.url === "/readyz") {
+      const ready = !stopping && listener !== undefined;
+      res.writeHead(ready ? 200 : 503, { "content-type": "application/json" });
+      res.end(JSON.stringify({ status: ready ? "ready" : "not_ready" }));
+      return;
+    }
     res.writeHead(404).end();
   });
   const wss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024 });
@@ -435,7 +446,19 @@ export async function startRealtimeServer(options: { port?: number } = {}) {
 
 if (import.meta.main) {
   startRealtimeServer()
-    .then(({ port }) => console.log(`WebSocket server listening on ${port}`))
+    .then(({ port, close }) => {
+      console.log(`WebSocket server listening on ${port}`);
+      let stopping = false;
+      const shutdown = async (signal: string) => {
+        if (stopping) return;
+        stopping = true;
+        console.log(`Received ${signal}; stopping WebSocket server`);
+        await close();
+        await prisma.$disconnect();
+      };
+      process.once("SIGINT", () => void shutdown("SIGINT"));
+      process.once("SIGTERM", () => void shutdown("SIGTERM"));
+    })
     .catch((error) => {
       console.error(error);
       process.exitCode = 1;

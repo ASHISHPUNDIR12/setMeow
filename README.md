@@ -1,159 +1,63 @@
-# Turborepo starter
+# Setmeow
 
-This Turborepo starter is maintained by the Turborepo core team.
+Setmeow is a collaborative kanban app. Users organize work in workspaces and boards, track issues across sections, comment and assign work, invite members, and see live updates.
 
-## Using this example
+## Services
 
-Run the following command:
+| Workspace | Purpose | Local URL |
+| --- | --- | --- |
+| `apps/frontend` | Next.js web app | `http://localhost:3000` |
+| `apps/backend` | Express API and authentication | `http://localhost:3001` |
+| `apps/websockets` | Board updates, presence, and invitation notifications | `ws://localhost:3002` |
+| `packages/db` | Prisma schema, migrations, and PostgreSQL client | PostgreSQL |
 
-```sh
-npx create-turbo@latest
-```
+## Local setup
 
-## What's inside?
+Requirements: Bun 1.4.2, Node.js 24+, and PostgreSQL.
 
-This Turborepo includes the following packages/apps:
+1. Install dependencies from the repository root:
 
-### Apps and Packages
+   ```bash
+   bun install --frozen-lockfile
+   ```
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `@next/eslint-plugin-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+2. Create an empty PostgreSQL database, then copy the environment examples:
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+   ```bash
+   cp apps/backend/.env.example apps/backend/.env
+   cp apps/backend/.env packages/db/.env
+   cp apps/websockets/.env.example apps/websockets/.env
+   cp apps/frontend/.env.example apps/frontend/.env.local
+   ```
 
-### Utilities
+   Set `DATABASE_URL` in the backend, database, and WebSocket environments. Set the same `JWT_SECRET` in the backend and WebSocket environments.
 
-This Turborepo has some additional tools already setup for you:
+3. Generate Prisma Client and apply local migrations:
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+   ```bash
+   cd packages/db
+   bun run generate
+   bun run migrate:dev
+   cd ../..
+   ```
 
-### Build
+4. Start the frontend, API, and WebSocket service:
 
-To build all apps and packages, run the following command:
+   ```bash
+   bun run dev
+   ```
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+   Open `http://localhost:3000`.
 
-```sh
-cd my-turborepo
-turbo build
-```
+## Deployment
 
-Without global `turbo`, use your package manager:
+Deploy the frontend, backend, and WebSocket service separately, with PostgreSQL reachable by the backend and WebSocket service. Use Bun 1.4.2 and configure the required production environment variables from each service's `.env.example`.
 
-```sh
-cd my-turborepo
-npx turbo build
-bun exec turbo build
-bun exec turbo build
-```
+Before deployment, generate Prisma Client in the backend and WebSocket build environments and run `bun run migrate:deploy` once from `packages/db` with the production `DATABASE_URL`. Set `API_URL` and `NEXT_PUBLIC_WS_URL` before building the frontend. Use HTTPS/WSS, and route the WebSocket connection through the frontend hostname so the browser sends its session cookie.
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Detailed setup and operations:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-bun exec turbo build --filter=docs
-bun exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-bun exec turbo dev
-bun exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-bun exec turbo dev --filter=web
-bun exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-bun exec turbo login
-bun exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-bun exec turbo link
-bun exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- [Frontend](apps/frontend/README.md)
+- [Backend](apps/backend/README.md)
+- [WebSocket service and data flow](apps/websockets/README.md)
+- [Database and migrations](packages/db/README.md)

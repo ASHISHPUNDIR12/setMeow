@@ -16,12 +16,24 @@ model User {
   id                  String         @id @default(uuid())
   email               String         @unique
   username            String
-  passwordHash        String
+  passwordHash        String?
+  oauthAccounts       OAuthAccount[]
   memberships         Membership[]
   issueMappings       IssueMapping[]
   comments            Comment[]
   receivedInvitations Invitation[]   @relation("InvitationRecipient")
   sentInvitations     Invitation[]   @relation("InvitationSender")
+}
+
+model OAuthAccount {
+  id                String @id @default(uuid())
+  provider          String
+  providerAccountId String
+  userId            String
+  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Organization {

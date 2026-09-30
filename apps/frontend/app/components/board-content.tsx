@@ -5,7 +5,7 @@ import type { Issue, Section } from "../lib/types";
 import { BoardColumn } from "./board-column";
 import { BoardWelcome } from "./board-welcome";
 
-type Props = {
+type BoardContentProps = {
   hasOrganization: boolean;
   hasBoard: boolean;
   loading: boolean;
@@ -22,9 +22,19 @@ type Props = {
   onOpenIssue: (issue: Issue) => void;
 };
 
-export function BoardContent(props: Props) {
+export function BoardContent(props: BoardContentProps) {
   const [draggingIssueId, setDraggingIssueId] = useState("");
-  if (!props.hasOrganization)
+  const orderedSections = [...props.sections].sort((left, right) => {
+    const rank = (title: string) => {
+      const normalized = title.trim().toLowerCase().replace(/[ _-]/g, "");
+      if (normalized === "todo" || normalized === "backlog") return 0;
+      if (normalized === "inprogress") return 1;
+      if (normalized === "done") return 2;
+      return 3;
+    };
+    return rank(left.title) - rank(right.title);
+  });
+  if (!props.hasOrganization) {
     return (
       <BoardWelcome
         kind="organization"
@@ -33,7 +43,9 @@ export function BoardContent(props: Props) {
         onCreateSection={props.onCreateSection}
       />
     );
-  if (!props.hasBoard)
+  }
+
+  if (!props.hasBoard) {
     return (
       <BoardWelcome
         kind="board"
@@ -42,13 +54,18 @@ export function BoardContent(props: Props) {
         onCreateSection={props.onCreateSection}
       />
     );
-  if (props.loading && props.sections.length === 0)
+  }
+
+  if (props.loading && props.sections.length === 0) {
     return (
-      <div className="board-loading">
-        <span className="loader" /> Loading your board…
+      <div className="flex min-h-64 items-center justify-center gap-3 text-xs text-[#958f7e]">
+        <span className="size-4.5 animate-spin rounded-full border-2 border-[#e4dec9] border-t-[#c39e36] motion-reduce:animate-none" />{" "}
+        Loading your board…
       </div>
     );
-  if (props.sections.length === 0)
+  }
+
+  if (props.sections.length === 0) {
     return (
       <BoardWelcome
         kind="section"
@@ -57,25 +74,33 @@ export function BoardContent(props: Props) {
         onCreateSection={props.onCreateSection}
       />
     );
+  }
 
   return (
-    <div className="board-area">
-      <div className="board-toolbar">
+    <div className="w-full">
+      <div className="flex items-center justify-between px-px pb-3 text-[10px] text-[#9b9686]">
         <span>
-          <b>{props.issues.length}</b>{" "}
+          <b className="font-extrabold text-[#635d4c] dark:text-[#e1dac8]">
+            {props.issues.length}
+          </b>{" "}
           {props.issues.length === 1 ? "issue" : "issues"}
         </span>
-        <span className="drag-hint">Drag a card or use its move menu</span>
+        <span className="text-[#aaa596] max-sm:hidden">
+          Drag a card or use its move menu
+        </span>
       </div>
-      <div className="columns" aria-label="Issue board">
-        {props.sections.map((section, index) => (
+      <div
+        className="flex items-start gap-4.5 overflow-x-auto px-1 pt-2 pb-8 [scrollbar-color:#ded7c4_transparent] [scrollbar-width:thin] max-sm:-mx-1 max-sm:gap-3"
+        aria-label="Issue board"
+      >
+        {orderedSections.map((section, index) => (
           <BoardColumn
             key={section.id}
             section={section}
             index={index}
-            sectionCount={props.sections.length}
+            sectionCount={orderedSections.length}
             issues={props.issuesBySection.get(section.id) ?? []}
-            sections={props.sections}
+            sections={orderedSections}
             draggingIssueId={draggingIssueId}
             onDragIssue={setDraggingIssueId}
             onOpenIssue={props.onOpenIssue}
@@ -85,10 +110,11 @@ export function BoardContent(props: Props) {
         ))}
         {props.addingSection ? (
           <form
-            className="add-column add-column-form"
+            className="flex min-h-12 w-40 min-w-40 cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-[#d4cebc] bg-white/20 text-[10px] text-[#98917e] hover:bg-white/55 dark:border-[#514b3e] dark:bg-white/3 dark:text-[#b3aa96] dark:hover:bg-[#39352a] justify-start p-1.5"
             onSubmit={props.onCreateSection}
           >
             <input
+              className="w-23 min-w-0 border-0 bg-transparent text-[10px] outline-none"
               autoFocus
               name="title"
               aria-label="Section name"
@@ -96,10 +122,15 @@ export function BoardContent(props: Props) {
               maxLength={50}
               required
             />
-            <button type="submit" aria-label="Save section">
+            <button
+              className="size-6 cursor-pointer rounded-lg border-0 bg-[#e9e4d4] text-[#7c745f] dark:bg-[#494333] dark:text-[#d0c6af]"
+              type="submit"
+              aria-label="Save section"
+            >
               ↵
             </button>
             <button
+              className="size-6 cursor-pointer rounded-lg border-0 bg-[#e9e4d4] text-[#7c745f] dark:bg-[#494333] dark:text-[#d0c6af]"
               type="button"
               aria-label="Cancel"
               onClick={() => props.onAddingSectionChange(false)}
@@ -109,10 +140,10 @@ export function BoardContent(props: Props) {
           </form>
         ) : (
           <button
-            className="add-column"
+            className="flex min-h-12 w-40 min-w-40 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-[#d4cebc] bg-white/20 text-[10px] text-[#98917e] hover:bg-white/55 dark:border-[#514b3e] dark:bg-white/3 dark:text-[#b3aa96] dark:hover:bg-[#39352a]"
             onClick={() => props.onAddingSectionChange(true)}
           >
-            <span>＋</span>
+            <span className="text-base">＋</span>
             <b>Add section</b>
           </button>
         )}

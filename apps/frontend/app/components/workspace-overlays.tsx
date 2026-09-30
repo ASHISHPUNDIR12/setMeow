@@ -1,53 +1,58 @@
 "use client";
 
-import { WorkspaceDialogs } from "./workspace-dialogs";
+import { CreateWorkspaceDialogs } from "./create-workspace-dialogs";
+import { InvitationViews } from "./invitation-views";
+import { IssueDialog } from "./issue-dialog";
 import type { DashboardController } from "../hooks/use-dashboard-controller";
 
 export function WorkspaceOverlays({ app }: { app: DashboardController }) {
   const { state } = app;
+
   return (
-    <WorkspaceDialogs
-      createOrganizationOpen={state.showCreateOrg}
-      createBoardOpen={state.showCreateBoard}
-      inviteOpen={state.showInvite}
-      inboxOpen={state.showInbox}
-      selectedIssue={state.selectedIssue}
-      isAdmin={app.isAdmin}
-      organizationId={state.organizationId}
-      memberships={state.memberships}
-      invitations={state.invitations}
-      organizationPeople={state.organizationPeople}
-      issueComments={state.issueComments}
-      issueAssignments={state.issueAssignments}
-      newOrgName={state.newOrgName}
-      newOrgDescription={state.newOrgDescription}
-      newBoardTitle={state.newBoardTitle}
-      inviteEmail={state.inviteEmail}
-      editTitle={state.editTitle}
-      editDescription={state.editDescription}
-      commentText={state.commentText}
-      onCloseCreateOrganization={() => state.setShowCreateOrg(false)}
-      onCloseCreateBoard={() => state.setShowCreateBoard(false)}
-      onCloseInvite={() => state.setShowInvite(false)}
-      onCloseInbox={() => state.setShowInbox(false)}
-      onCloseIssue={() => state.setSelectedIssue(null)}
-      onCreateOrganization={app.createOrganization}
-      onCreateBoard={app.createBoard}
-      onSendInvite={app.sendInvite}
-      onSaveIssue={app.saveIssue}
-      onAddComment={app.addComment}
-      onAssignUser={app.assignUser}
-      onRemoveAssignment={app.removeAssignment}
-      onDeleteIssue={app.deleteIssue}
-      onAnswerInvite={app.answerInvite}
-      onOrganizationChange={state.setOrganizationId}
-      onOrgNameChange={state.setNewOrgName}
-      onOrgDescriptionChange={state.setNewOrgDescription}
-      onBoardTitleChange={state.setNewBoardTitle}
-      onInviteEmailChange={state.setInviteEmail}
-      onEditTitleChange={state.setEditTitle}
-      onEditDescriptionChange={state.setEditDescription}
-      onCommentTextChange={state.setCommentText}
-    />
+    <>
+      <CreateWorkspaceDialogs
+        createOrganizationOpen={state.showCreateOrg}
+        onCloseCreateOrganization={() => state.setShowCreateOrg(false)}
+        onCreateOrganization={app.createOrganization}
+        newOrgName={state.newOrgName}
+        onOrgNameChange={state.setNewOrgName}
+        newOrgDescription={state.newOrgDescription}
+        onOrgDescriptionChange={state.setNewOrgDescription}
+        createBoardOpen={state.showCreateBoard}
+        onCloseCreateBoard={() => state.setShowCreateBoard(false)}
+        onCreateBoard={app.createBoard}
+        newBoardTitle={state.newBoardTitle}
+        onBoardTitleChange={state.setNewBoardTitle}
+      />
+      <InvitationViews
+        inviteOpen={state.showInvite}
+        onCloseInvite={() => state.setShowInvite(false)}
+        isAdmin={app.isAdmin}
+        onSendInvite={app.sendInvite}
+        organizationId={state.organizationId}
+        onOrganizationChange={app.chooseOrganization}
+        memberships={state.memberships}
+        inviteEmail={state.inviteEmail}
+        onInviteEmailChange={state.setInviteEmail}
+      />
+      <IssueDialog
+        selectedIssue={state.selectedIssue}
+        onCloseIssue={() => state.setSelectedIssue(null)}
+        onSaveIssue={app.saveIssue}
+        editTitle={state.editTitle}
+        onEditTitleChange={state.setEditTitle}
+        editDescription={state.editDescription}
+        onEditDescriptionChange={state.setEditDescription}
+        onDeleteIssue={app.deleteIssue}
+        onAssignUser={app.assignUser}
+        organizationPeople={state.organizationPeople}
+        issueAssignments={state.issueAssignments}
+        onRemoveAssignment={app.removeAssignment}
+        issueComments={state.issueComments}
+        onAddComment={app.addComment}
+        commentText={state.commentText}
+        onCommentTextChange={state.setCommentText}
+      />
+    </>
   );
 }

@@ -2,7 +2,7 @@
 
 import type { Issue, Section } from "../lib/types";
 
-type Props = {
+type IssueCardProps = {
   issue: Issue;
   index: number;
   sectionIndex: number;
@@ -15,6 +15,12 @@ type Props = {
   onMove: (issueId: string, sectionId: string) => void;
 };
 
+const tagColors = [
+  "bg-[#f7edcc] text-[#9a7c28]",
+  "bg-[#edf0e7] text-[#718368]",
+  "bg-[#f5e9e3] text-[#b47862]",
+];
+
 export function IssueCard({
   issue,
   index,
@@ -26,7 +32,7 @@ export function IssueCard({
   onDragEnd,
   onOpen,
   onMove,
-}: Props) {
+}: IssueCardProps) {
   const tag =
     sectionIndex === 0
       ? "PLAN"
@@ -35,32 +41,44 @@ export function IssueCard({
         : "IN FLIGHT";
   return (
     <article
-      className={`issue-card clay-card${dragging ? " dragging" : ""}`}
+      className={`cursor-grab p-3 transition duration-150 hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-[0_4px_10px_rgba(0,0,0,0.2)] active:cursor-grabbing motion-reduce:transform-none motion-reduce:transition-none rounded-2xl border border-white/95 bg-[#fffefa] shadow-clay-sm dark:border-line dark:bg-[#343128] dark:shadow-[0_3px_8px_rgba(0,0,0,0.16)] ${dragging ? "opacity-50" : ""}`}
       draggable
       onDragStart={(event) => onDragStart(issue, event.dataTransfer)}
       onDragEnd={onDragEnd}
     >
-      <div className="issue-card-top">
-        <span className={`issue-tag tag-${index % 3}`}>{tag}</span>
+      <div className="mb-1 flex items-center justify-between">
+        <span
+          className={`inline-flex min-h-4.5 items-center rounded-md px-2 text-[8px] font-extrabold tracking-[0.08em] ${tagColors[index % tagColors.length]}`}
+        >
+          {tag}
+        </span>
         <button
-          className="dots-button"
+          className="h-5.5 w-6 cursor-pointer rounded-lg border-0 bg-transparent text-[19px] leading-none text-[#aaa491] hover:bg-[#f2eedf] dark:hover:bg-[#39352a]"
           onClick={() => onOpen(issue)}
           aria-label={`Open ${issue.title}`}
         >
           ···
         </button>
       </div>
-      <button className="issue-title" onClick={() => onOpen(issue)}>
+      <button
+        className="block w-full cursor-pointer border-0 bg-transparent p-0 text-left text-xs leading-normal font-bold text-[#46443a] dark:text-[#e8e1d0]"
+        onClick={() => onOpen(issue)}
+      >
         {issue.title}
       </button>
       {issue.description && (
-        <p className="issue-description">{issue.description}</p>
+        <p className="mt-1 mb-2.5 line-clamp-2 text-[10px] leading-normal text-[#969182]">
+          {issue.description}
+        </p>
       )}
-      <div className="issue-card-bottom">
-        <span className="issue-id">{issue.id.slice(0, 7).toUpperCase()}</span>
-        <label className="move-select-label">
+      <div className="mt-3.5 flex items-center justify-between border-t border-[#f0ede3] pt-2 dark:border-line">
+        <span className="text-[8px] font-bold tracking-[0.06em] text-[#aaa595]">
+          {issue.id.slice(0, 7).toUpperCase()}
+        </span>
+        <label className="relative flex items-center text-[11px] text-[#9a927b] hover:text-[#7f6a2c]">
           <span className="sr-only">Move {issue.title}</span>
           <select
+            className="absolute inset-0 w-full cursor-pointer opacity-0"
             value={issue.sectionId}
             onChange={(event) => onMove(issue.id, event.target.value)}
             aria-label={`Move ${issue.title}`}

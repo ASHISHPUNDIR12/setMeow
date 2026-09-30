@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { api, WS } from "../lib/api";
+import { api, WEBSOCKET_URL } from "../lib/api";
 import type {
   OrganizationMembership,
   Invitation,
@@ -14,11 +14,8 @@ export function useAccountSync(state: DashboardState) {
   const {
     setMemberships,
     setInvitations,
-    setOrganizationId,
     setSignedIn,
-    setChecking,
     setError,
-    setAuthMessage,
   } = state;
   const refreshAccount = useCallback(async () => {
     const [organizations, inbox] = await Promise.all([
@@ -28,13 +25,8 @@ export function useAccountSync(state: DashboardState) {
     const memberships = organizations.allOrganization ?? [];
     setMemberships(memberships);
     setInvitations(inbox.invitations ?? []);
-    setOrganizationId((current) =>
-      memberships.some((item) => item.organization.id === current)
-        ? current
-        : (memberships[0]?.organization.id ?? ""),
-    );
     setSignedIn(true);
-  }, [setMemberships, setInvitations, setOrganizationId, setSignedIn]);
+  }, [setMemberships, setInvitations, setSignedIn]);
 
   useEffect(() => {
     let active = true;
@@ -42,23 +34,12 @@ export function useAccountSync(state: DashboardState) {
       .then(refreshAccount)
       .catch((cause) => {
         if (!active) return;
-        if (cause instanceof Error && /401|unauthorized/i.test(cause.message))
-          setSignedIn(false);
-        else if (cause instanceof Error && cause.message.includes("(401)"))
-          setSignedIn(false);
-        else {
-          const message = messageOf(cause);
-          setError(message);
-          setAuthMessage(message);
-        }
-      })
-      .finally(() => {
-        if (active) setChecking(false);
+        setError(messageOf(cause));
       });
     return () => {
       active = false;
     };
-  }, [refreshAccount, setSignedIn, setError, setAuthMessage, setChecking]);
+  }, [refreshAccount, setSignedIn, setError]);
 
   useEffect(() => {
     if (!state.signedIn) return;
@@ -68,7 +49,7 @@ export function useAccountSync(state: DashboardState) {
     let attempts = 0;
     const connect = () => {
       if (!active) return;
-      socket = new WebSocket(`${WS.replace(/\/$/, "")}/users/me`);
+      socket = new WebSocket(`${WEBSOCKET_URL.replace(/\/$/, "")}/users/me`);
       socket.onopen = () => {
         attempts = 0;
         void refreshAccount().catch((cause) => setError(messageOf(cause)));

@@ -1,0 +1,20 @@
+<svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 48 48"
+      fill="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="paw" x1="10" y1="5" x2="37" y2="43" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#FACC15" />
+          <stop offset="1" stop-color="#F97316" />
+        </linearGradient>
+      </defs>
+      <g fill="url(#paw)">
+        <ellipse cx="9" cy="21" rx="5" ry="7" transform="rotate(-24 9 21)" />
+        <ellipse cx="19" cy="12" rx="5" ry="7" transform="rotate(-8 19 12)" />
+        <ellipse cx="30" cy="12" rx="5" ry="7" transform="rotate(8 30 12)" />
+        <ellipse cx="40" cy="21" rx="5" ry="7" transform="rotate(24 40 21)" />
+        <path d="M24 23c-5.5 0-7.2 5.5-11 9.1-4.6 4.4-2.7 10.4 2.8 10.4 3.3 0 5.4-1.7 8.2-1.7s4.9 1.7 8.2 1.7c5.5 0 7.4-6 2.8-10.4C31.2 28.5 29.5 23 24 23Z" />
+      </g>
+    </svg>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { boardPath, workspacePath } from "../lib/routes";
 import type { FormEvent } from "react";
 import { api } from "../lib/api";
 import type { Board, Organization, Section } from "../lib/types";
@@ -11,6 +13,8 @@ export function useWorkspaceActions(
   announce: (message: string) => void,
   refreshAccount: () => Promise<void>,
 ) {
+  const router = useRouter();
+
   async function createOrganization(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     state.setError("");
@@ -29,7 +33,7 @@ export function useWorkspaceActions(
       state.setNewOrgDescription("");
       state.setShowCreateOrg(false);
       await refreshAccount();
-      state.setOrganizationId(organization.id);
+      router.push(workspacePath(organization.id));
       announce("Organization created");
     } catch (cause) {
       state.setError(messageOf(cause));
@@ -48,22 +52,16 @@ export function useWorkspaceActions(
           body: JSON.stringify({ title: state.newBoardTitle.trim() }),
         },
       );
-      const sections: Section[] = [];
       for (const title of ["Backlog", "In progress", "Done"]) {
-        const result = await api<{ section: Section }>("/v1/section", {
+        await api<{ section: Section }>("/v1/section", {
           method: "POST",
           body: JSON.stringify({ boardId: board.id, title }),
         });
-        sections.push(result.section);
       }
-      state.setBoards((current) => [...current, board]);
-      state.setLoadingBoard(true);
-      state.setConnection("connecting");
-      state.setBoardId(board.id);
-      state.setSections(sections);
       state.setNewBoardTitle("");
       state.setShowCreateBoard(false);
       announce("Board created");
+      router.push(boardPath(state.organizationId, board.id));
     } catch (cause) {
       state.setError(
         `${messageOf(cause)} If the board was created, refresh and add its sections before creating issues.`,

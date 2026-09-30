@@ -1,11 +1,6 @@
-import type { Metadata } from "next";
-import Dashboard from "./dashboard";
+import { redirect } from "next/navigation";
+import { getAccount } from "./lib/server-api";
 
-export const metadata: Metadata = {
-  title: "Setmeow — thoughtful work, together",
-  description: "A calmer workspace for teams to plan, move, and make progress.",
-};
-
-export default function Home() {
-  return <Dashboard />;
+export default async function Home() {
+  redirect(await getAccount() ? "/dashboard" : "/signin");
 }

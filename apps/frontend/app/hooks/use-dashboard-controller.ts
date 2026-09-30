@@ -1,9 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { workspacePath } from "../lib/routes";
+import { api } from "../lib/api";
+import { messageOf } from "./errors";
+import type { WorkspaceInitialState } from "./use-dashboard-state";
 import { useMemo } from "react";
 import type { Issue } from "../lib/types";
 import { useAccountSync } from "./use-account-sync";
-import { useAuthActions } from "./use-auth-actions";
 import { useBoardRealtime } from "./use-board-realtime";
 import { useDashboardState } from "./use-dashboard-state";
 import { useInvitationActions } from "./use-invitation-actions";
@@ -12,25 +16,41 @@ import { useIssueCollaboration } from "./use-issue-collaboration";
 import { useIssueDetails } from "./use-issue-details";
 import { useThemePreference } from "./use-theme-preference";
 import { useWorkspaceActions } from "./use-workspace-actions";
-import { useWorkspaceData } from "./use-workspace-data";
 
-export function useDashboardController() {
-  const state = useDashboardState();
+const NOTICE_DURATION_MS = 3200;
+
+export function useDashboardController(initial: WorkspaceInitialState) {
+  const router = useRouter();
+  const state = useDashboardState(initial);
   const { theme, setTheme } = useThemePreference();
   const refreshAccount = useAccountSync(state);
-  useWorkspaceData(state);
   useIssueDetails(state);
   const { moveIssue } = useBoardRealtime(state);
 
   function chooseOrganization(id: string) {
-    state.setOrganizationId(id);
-    state.setBoards([]);
-    state.setBoardId("");
-    state.setSections([]);
-    state.setIssues([]);
-    state.setActiveUsers([]);
-    state.setConnection("offline");
+    router.push(workspacePath(id));
   }
+
+  async function signOut() {
+    try {
+      await api("/auth/signout", { method: "POST" });
+      state.setSignedIn(false);
+      router.replace("/signin");
+      router.refresh();
+    } catch (cause) {
+      state.setError(messageOf(cause));
+    }
+  }
+
+  function toggleTheme() {
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+  }
+
+  function dismissMessage() {
+    state.setError("");
+    state.setNotice("");
+  }
+
   function openIssue(issue: Issue) {
     state.setEditTitle(issue.title);
     state.setEditDescription(issue.description);
@@ -39,10 +59,9 @@ export function useDashboardController() {
   }
   function announce(message: string) {
     state.setNotice(message);
-    window.setTimeout(() => state.setNotice(""), 3200);
+    window.setTimeout(() => state.setNotice(""), NOTICE_DURATION_MS);
   }
 
-  const { submitAuth, signOut } = useAuthActions(state, refreshAccount);
   const workspaceActions = useWorkspaceActions(state, announce, refreshAccount);
   const issueActions = useIssueActions(state, announce);
   const collaborationActions = useIssueCollaboration(state);
@@ -60,14 +79,18 @@ export function useDashboardController() {
     const grouped = new Map(
       state.sections.map((section) => [section.id, [] as Issue[]]),
     );
-    for (const issue of state.issues) grouped.get(issue.sectionId)?.push(issue);
+    for (const issue of state.issues) {
+      grouped.get(issue.sectionId)?.push(issue);
+    }
     return grouped;
   }, [state.issues, state.sections]);
 
   return {
     state,
+    user: initial.user,
     theme,
-    setTheme,
+    toggleTheme,
+    dismissMessage,
     selectedMembership,
     selectedBoard,
     isAdmin: selectedMembership?.role === "admin",
@@ -80,7 +103,6 @@ export function useDashboardController() {
     ...issueActions,
     ...collaborationActions,
     ...invitationActions,
-    submitAuth,
     signOut,
   };
 }

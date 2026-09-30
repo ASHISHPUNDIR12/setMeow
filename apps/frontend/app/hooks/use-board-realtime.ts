@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { api, WS } from "../lib/api";
+import { api, WEBSOCKET_URL } from "../lib/api";
 import type { Issue, Section, SocketMessage } from "../lib/types";
 import type { DashboardState } from "./use-dashboard-state";
 import { handleBoardEvent } from "./board-event-handler";
@@ -64,7 +64,7 @@ export function useBoardRealtime(state: DashboardState) {
       if (!active) return;
       setConnection("connecting");
       const nextSocket = new WebSocket(
-        `${WS.replace(/\/$/, "")}/boards/${boardId}`,
+        `${WEBSOCKET_URL.replace(/\/$/, "")}/boards/${boardId}`,
       );
       socket.current = nextSocket;
       nextSocket.onopen = () => {

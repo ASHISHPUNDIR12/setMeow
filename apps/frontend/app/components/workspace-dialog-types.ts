@@ -8,46 +8,53 @@ import type {
   Person,
 } from "../lib/types";
 
-export type WorkspaceDialogProps = {
+export type CreateWorkspaceDialogsProps = {
   createOrganizationOpen: boolean;
-  createBoardOpen: boolean;
-  inviteOpen: boolean;
-  inboxOpen: boolean;
-  selectedIssue: Issue | null;
-  isAdmin: boolean;
-  organizationId: string;
-  memberships: OrganizationMembership[];
-  invitations: Invitation[];
-  organizationPeople: Person[];
-  issueComments: Comment[];
-  issueAssignments: Assignment[];
-  newOrgName: string;
-  newOrgDescription: string;
-  newBoardTitle: string;
-  inviteEmail: string;
-  editTitle: string;
-  editDescription: string;
-  commentText: string;
   onCloseCreateOrganization: () => void;
-  onCloseCreateBoard: () => void;
-  onCloseInvite: () => void;
-  onCloseInbox: () => void;
-  onCloseIssue: () => void;
   onCreateOrganization: (event: FormEvent<HTMLFormElement>) => void;
-  onCreateBoard: (event: FormEvent<HTMLFormElement>) => void;
-  onSendInvite: (event: FormEvent<HTMLFormElement>) => void;
-  onSaveIssue: (event: FormEvent<HTMLFormElement>) => void;
-  onAddComment: (event: FormEvent<HTMLFormElement>) => void;
-  onAssignUser: (userId: string) => void;
-  onRemoveAssignment: (userId: string) => void;
-  onDeleteIssue: (issue: Issue) => void;
-  onAnswerInvite: (id: string, answer: "accept" | "decline") => void;
-  onOrganizationChange: (id: string) => void;
+  newOrgName: string;
   onOrgNameChange: (value: string) => void;
+  newOrgDescription: string;
   onOrgDescriptionChange: (value: string) => void;
+  createBoardOpen: boolean;
+  onCloseCreateBoard: () => void;
+  onCreateBoard: (event: FormEvent<HTMLFormElement>) => void;
+  newBoardTitle: string;
   onBoardTitleChange: (value: string) => void;
+};
+
+export type InvitationViewsProps = {
+  inviteOpen: boolean;
+  onCloseInvite: () => void;
+  isAdmin: boolean;
+  onSendInvite: (event: FormEvent<HTMLFormElement>) => void;
+  organizationId: string;
+  onOrganizationChange: (id: string) => void;
+  memberships: OrganizationMembership[];
+  inviteEmail: string;
   onInviteEmailChange: (value: string) => void;
+};
+
+export type InvitationInboxProps = {
+  invitations: Invitation[];
+  onAnswerInvite: (id: string, answer: "accept" | "decline") => void;
+};
+
+export type IssueDialogProps = {
+  selectedIssue: Issue | null;
+  onCloseIssue: () => void;
+  onSaveIssue: (event: FormEvent<HTMLFormElement>) => void;
+  editTitle: string;
   onEditTitleChange: (value: string) => void;
+  editDescription: string;
   onEditDescriptionChange: (value: string) => void;
+  onDeleteIssue: (issue: Issue) => void;
+  onAssignUser: (userId: string) => void;
+  organizationPeople: Person[];
+  issueAssignments: Assignment[];
+  onRemoveAssignment: (userId: string) => void;
+  issueComments: Comment[];
+  onAddComment: (event: FormEvent<HTMLFormElement>) => void;
+  commentText: string;
   onCommentTextChange: (value: string) => void;
 };

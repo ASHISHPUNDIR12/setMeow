@@ -1,13 +1,11 @@
 "use client";
 
-import { Modal } from "./ui";
-import type { WorkspaceDialogProps } from "./workspace-dialog-types";
+import { buttonStyles, formStyles } from "../lib/ui-styles";
 
-export function CreateWorkspaceDialogs({
-  props,
-}: {
-  props: WorkspaceDialogProps;
-}) {
+import { Modal } from "./ui";
+import type { CreateWorkspaceDialogsProps } from "./workspace-dialog-types";
+
+export function CreateWorkspaceDialogs(props: CreateWorkspaceDialogsProps) {
   return (
     <>
       {props.createOrganizationOpen && (
@@ -15,16 +13,17 @@ export function CreateWorkspaceDialogs({
           title="Create a workspace"
           close={props.onCloseCreateOrganization}
         >
-          <p className="modal-copy">
+          <p className="mt-2 mb-5 text-xs leading-relaxed text-[#8f8979] dark:text-muted">
             Give your team a shared place to plan and make progress.
           </p>
           <form
-            className="stack modal-form"
+            className="flex flex-col gap-3.5"
             onSubmit={props.onCreateOrganization}
           >
-            <label>
+            <label className={formStyles.label}>
               Workspace name
               <input
+                className={formStyles.input}
                 autoFocus
                 required
                 maxLength={50}
@@ -33,9 +32,10 @@ export function CreateWorkspaceDialogs({
                 placeholder="Studio North"
               />
             </label>
-            <label>
-              A short description <span className="muted">(optional)</span>
+            <label className={formStyles.label}>
+              A short description <span className="text-muted">(optional)</span>
               <textarea
+                className={formStyles.textarea}
                 maxLength={100}
                 rows={3}
                 value={props.newOrgDescription}
@@ -45,15 +45,15 @@ export function CreateWorkspaceDialogs({
                 placeholder="What are you working on together?"
               />
             </label>
-            <div className="modal-actions">
+            <div className="mt-1.5 flex justify-end gap-2">
               <button
                 type="button"
-                className="button button-quiet"
+                className={buttonStyles.quiet}
                 onClick={props.onCloseCreateOrganization}
               >
                 Cancel
               </button>
-              <button className="button button-primary">
+              <button className={buttonStyles.primary}>
                 Create workspace <span>↗</span>
               </button>
             </div>
@@ -62,13 +62,17 @@ export function CreateWorkspaceDialogs({
       )}
       {props.createBoardOpen && (
         <Modal title="Create a board" close={props.onCloseCreateBoard}>
-          <p className="modal-copy">
+          <p className="mt-2 mb-5 text-xs leading-relaxed text-[#8f8979] dark:text-muted">
             Start with a name. We’ll set up Backlog, In progress, and Done.
           </p>
-          <form className="stack modal-form" onSubmit={props.onCreateBoard}>
-            <label>
+          <form
+            className="flex flex-col gap-3.5"
+            onSubmit={props.onCreateBoard}
+          >
+            <label className={formStyles.label}>
               Board name
               <input
+                className={formStyles.input}
                 autoFocus
                 required
                 maxLength={50}
@@ -79,15 +83,15 @@ export function CreateWorkspaceDialogs({
                 placeholder="Product launch"
               />
             </label>
-            <div className="modal-actions">
+            <div className="mt-1.5 flex justify-end gap-2">
               <button
                 type="button"
-                className="button button-quiet"
+                className={buttonStyles.quiet}
                 onClick={props.onCloseCreateBoard}
               >
                 Cancel
               </button>
-              <button className="button button-primary">
+              <button className={buttonStyles.primary}>
                 Create board <span>↗</span>
               </button>
             </div>

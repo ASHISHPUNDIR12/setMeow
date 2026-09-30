@@ -29,7 +29,13 @@ export function useIssueActions(
           description: "",
         }),
       });
-      state.setIssues((current) => [...current, issue]);
+      // The create response can race with the realtime `issue_created` event.
+      // Upsert by id so the same issue is not rendered twice.
+      state.setIssues((current) =>
+        current.some((item) => item.id === issue.id)
+          ? current.map((item) => (item.id === issue.id ? issue : item))
+          : [...current, issue],
+      );
       form.reset();
     } catch (cause) {
       state.setError(messageOf(cause));

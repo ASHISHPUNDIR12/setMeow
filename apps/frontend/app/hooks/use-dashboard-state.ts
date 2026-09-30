@@ -12,19 +12,25 @@ import type {
   Section,
 } from "../lib/types";
 
-export function useDashboardState() {
-  const [checking, setChecking] = useState(true);
-  const [signedIn, setSignedIn] = useState(false);
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const [authBusy, setAuthBusy] = useState(false);
-  const [authMessage, setAuthMessage] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
-  const [memberships, setMemberships] = useState<OrganizationMembership[]>([]);
-  const [organizationId, setOrganizationId] = useState("");
-  const [boards, setBoards] = useState<Board[]>([]);
-  const [boardId, setBoardId] = useState("");
+export type WorkspaceInitialState = {
+  user: Person;
+  memberships: OrganizationMembership[];
+  organizationId: string;
+  boards: Board[];
+  boardId: string;
+};
+
+export function useDashboardState(initial: WorkspaceInitialState) {
+  const user = initial.user;
+  const [signedIn, setSignedIn] = useState(true);
+
+  // Workspace selection and the currently loaded board.
+  const [memberships, setMemberships] = useState<OrganizationMembership[]>(
+    initial.memberships,
+  );
+  const organizationId = initial.organizationId;
+  const [boards, setBoards] = useState<Board[]>(initial.boards);
+  const boardId = initial.boardId;
   const [sections, setSections] = useState<Section[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -32,18 +38,23 @@ export function useDashboardState() {
   const [connection, setConnection] = useState<
     "offline" | "connecting" | "live"
   >("offline");
-  const [loadingBoard, setLoadingBoard] = useState(false);
+  const [loadingBoard, setLoadingBoard] = useState(Boolean(initial.boardId));
+
+  // Feedback and dialog visibility.
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [showCreateOrg, setShowCreateOrg] = useState(false);
   const [showCreateBoard, setShowCreateBoard] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
-  const [showInbox, setShowInbox] = useState(false);
   const [addingSection, setAddingSection] = useState(false);
+
+  // Workspace creation and invitation forms.
   const [newOrgName, setNewOrgName] = useState("");
   const [newOrgDescription, setNewOrgDescription] = useState("");
   const [newBoardTitle, setNewBoardTitle] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+
+  // Selected issue, its editable fields, and collaboration details.
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [issueComments, setIssueComments] = useState<Comment[]>([]);
   const [issueAssignments, setIssueAssignments] = useState<Assignment[]>([]);
@@ -53,30 +64,15 @@ export function useDashboardState() {
   const [editDescription, setEditDescription] = useState("");
 
   return {
-    checking,
-    setChecking,
+    user,
     signedIn,
     setSignedIn,
-    authMode,
-    setAuthMode,
-    authBusy,
-    setAuthBusy,
-    authMessage,
-    setAuthMessage,
-    email,
-    setEmail,
-    password,
-    setPassword,
-    username,
-    setUsername,
     memberships,
     setMemberships,
     organizationId,
-    setOrganizationId,
     boards,
     setBoards,
     boardId,
-    setBoardId,
     sections,
     setSections,
     issues,
@@ -99,8 +95,6 @@ export function useDashboardState() {
     setShowCreateBoard,
     showInvite,
     setShowInvite,
-    showInbox,
-    setShowInbox,
     addingSection,
     setAddingSection,
     newOrgName,

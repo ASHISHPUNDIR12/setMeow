@@ -1,41 +1,50 @@
 "use client";
 
-import { Modal } from "./ui";
-import type { WorkspaceDialogProps } from "./workspace-dialog-types";
+import { buttonStyles, formStyles } from "../lib/ui-styles";
 
-export function InvitationViews({ props }: { props: WorkspaceDialogProps }) {
+import { Modal } from "./ui";
+import type { InvitationViewsProps } from "./workspace-dialog-types";
+
+export function InvitationViews(props: InvitationViewsProps) {
+  const adminMemberships = props.memberships.filter(
+    (membership) => membership.role === "admin",
+  );
+
   return (
     <>
       {props.inviteOpen && (
         <Modal title="Bring your people in" close={props.onCloseInvite}>
-          <p className="modal-copy">
+          <p className="mt-2 mb-5 text-xs leading-relaxed text-[#8f8979] dark:text-muted">
             Invites are for people who already have a Setmeow account.
           </p>
           {props.isAdmin ? (
-            <form className="stack modal-form" onSubmit={props.onSendInvite}>
-              <label>
+            <form
+              className="flex flex-col gap-3.5"
+              onSubmit={props.onSendInvite}
+            >
+              <label className={formStyles.label}>
                 Workspace
                 <select
+                  className={formStyles.input}
                   value={props.organizationId}
                   onChange={(event) =>
                     props.onOrganizationChange(event.target.value)
                   }
                 >
-                  {props.memberships
-                    .filter((item) => item.role === "admin")
-                    .map((item) => (
-                      <option
-                        key={item.organization.id}
-                        value={item.organization.id}
-                      >
-                        {item.organization.name}
-                      </option>
-                    ))}
+                  {adminMemberships.map((membership) => (
+                    <option
+                      key={membership.organization.id}
+                      value={membership.organization.id}
+                    >
+                      {membership.organization.name}
+                    </option>
+                  ))}
                 </select>
               </label>
-              <label>
+              <label className={formStyles.label}>
                 Email address
                 <input
+                  className={formStyles.input}
                   autoFocus
                   type="email"
                   required
@@ -46,69 +55,27 @@ export function InvitationViews({ props }: { props: WorkspaceDialogProps }) {
                   placeholder="teammate@company.com"
                 />
               </label>
-              <div className="modal-actions">
+              <div className="mt-1.5 flex justify-end gap-2">
                 <button
                   type="button"
-                  className="button button-quiet"
+                  className={buttonStyles.quiet}
                   onClick={props.onCloseInvite}
                 >
                   Cancel
                 </button>
-                <button className="button button-primary">
+                <button className={buttonStyles.primary}>
                   Send invitation <span>↗</span>
                 </button>
               </div>
             </form>
           ) : (
-            <p className="muted">
+            <p className="text-muted">
               An organization admin can invite members to this workspace.
             </p>
           )}
         </Modal>
       )}
-      {props.inboxOpen && (
-        <div className="invite-inbox-card clay-panel">
-          <div className="modal-heading">
-            <div>
-              <p className="eyebrow">YOUR INBOX</p>
-              <h2>Workspace invitations</h2>
-            </div>
-            <button
-              className="icon-button"
-              onClick={props.onCloseInbox}
-              aria-label="Close invitations"
-            >
-              ×
-            </button>
-          </div>
-          {props.invitations.length ? (
-            props.invitations.map((invite) => (
-              <div className="invite-row" key={invite.id}>
-                <div>
-                  <strong>{invite.organization.name}</strong>
-                  <span>Invited by {invite.invitedBy.username}</span>
-                </div>
-                <button
-                  className="button button-soft"
-                  onClick={() => props.onAnswerInvite(invite.id, "decline")}
-                >
-                  Decline
-                </button>
-                <button
-                  className="button button-primary"
-                  onClick={() => props.onAnswerInvite(invite.id, "accept")}
-                >
-                  Join <span>↗</span>
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="muted small-copy">
-              You’re all caught up. New invitations will appear here.
-            </p>
-          )}
-        </div>
-      )}
+
     </>
   );
 }
