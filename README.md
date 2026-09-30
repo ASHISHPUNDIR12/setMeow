@@ -53,7 +53,7 @@ Requirements: Bun 1.4.2, Node.js 24+, and PostgreSQL.
 
 Deploy the frontend, backend, and WebSocket service separately, with PostgreSQL reachable by the backend and WebSocket service. Use Bun 1.4.2 and configure the required production environment variables from each service's `.env.example`.
 
-Before deployment, generate Prisma Client in the backend and WebSocket build environments and run `bun run migrate:deploy` once from `packages/db` with the production `DATABASE_URL`. Set `API_URL` and `NEXT_PUBLIC_WS_URL` before building the frontend. Use HTTPS/WSS, and route the WebSocket connection through the frontend hostname so the browser sends its session cookie.
+Before deployment, generate Prisma Client in the backend and WebSocket build environments and run `bun run migrate:deploy` once from `packages/db` with the production `DATABASE_URL`. Set `API_URL` and `NEXT_PUBLIC_WS_URL` before building the frontend. Use HTTPS/WSS. The frontend authenticates separate-host WebSocket connections with short-lived tickets obtained through its authenticated API proxy.
 
 Detailed setup and operations:
 

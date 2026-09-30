@@ -17,15 +17,21 @@ export default function requireAuth(
 
   let decoded: string | jwt.JwtPayload;
   try {
-    decoded = jwt.verify(token, jwtSecret);
+    decoded = jwt.verify(token, jwtSecret, { algorithms: ["HS256"] });
   } catch {
     return res.status(401).json({ message: "unauthorized" });
   }
 
-  if (typeof decoded === "string" || typeof decoded.sub !== "string") {
+  if (
+    typeof decoded === "string" ||
+    typeof decoded.sub !== "string" ||
+    decoded.purpose !== undefined ||
+    decoded.aud !== undefined
+  ) {
     return res.status(401).json({ message: "unauthorized" });
   }
 
   res.locals.userId = decoded.sub;
+  res.locals.sessionExpiresAt = decoded.exp;
   next();
 }

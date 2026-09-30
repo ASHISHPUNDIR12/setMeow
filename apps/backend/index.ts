@@ -1,6 +1,7 @@
 import express from "express";
 import type { NextFunction, Request, Response } from "express";
 import authRouter from "./modules/auth.route";
+import socketTicketRouter from "./modules/socket-ticket.route";
 import organizationRouter from "./modules/organization.route";
 import boardRouter from "./modules/board.route";
 import sectionRouter from "./modules/section.route";
@@ -28,6 +29,7 @@ app.use((req, res, next) => {
 });
 const PORT = Number(process.env.PORT ?? 3001);
 app.use("/auth", authRouter);
+app.use("/auth", socketTicketRouter);
 app.use("/v1", organizationRouter);
 app.use("/v1", boardRouter);
 app.use("/v1", sectionRouter);

@@ -26,22 +26,24 @@ Use the repository root as the build context so Bun can install the `db` workspa
 
 ```bash
 bun install --frozen-lockfile
-cd apps/websockets
+cd packages/db
+bun run generate
+cd ../../apps/websockets
 bun run start
 ```
 
-Use Bun 1.4.2, as configured by the repository. No compile step is required. Configure the platform's port as `WS_PORT` (default `3002`) and bind the service to a public/reverse-proxy reachable interface; the listener binds to all interfaces.
+Use Bun 1.4.2, as configured by the repository. No compile step is required. The listener reads `WS_PORT`, falls back to the platform's `PORT`, then defaults to `3002`. It binds to all interfaces; configure the platform to forward traffic to this port.
 
 Set these server-side variables in the WebSocket deployment environment:
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `DATABASE_URL` | Yes | PostgreSQL connection string. The database must be reachable from this service and allow a dedicated long-lived connection for `LISTEN/NOTIFY`. |
+| `DATABASE_URL` | Yes | Direct PostgreSQL connection string for `LISTEN/NOTIFY`. For Neon, disable connection pooling when copying this URL. |
 | `JWT_SECRET` | Yes | The same private signing key used by the backend. |
 | `FRONTEND_ORIGIN` | Yes in production | Exact browser origin, such as `https://app.example.com`, with no trailing slash. Requests with a different `Origin` are rejected. |
-| `WS_PORT` | Platform-dependent | Listen port. Defaults to `3002`. |
+| `WS_PORT` / `PORT` | Platform-dependent | Listen port. `WS_PORT` takes precedence over `PORT`; defaults to `3002` if neither is set. |
 
-The frontend, backend, and WebSocket service must use the same `FRONTEND_ORIGIN`; the backend and WebSocket service must use the same `JWT_SECRET` and database. Set the frontend's `NEXT_PUBLIC_WS_URL` to the public WSS URL. Route that URL through the frontend hostname so the browser sends its host-only `accessToken` cookie. Configure the proxy/load balancer to support HTTP/1.1 WebSocket upgrades and long-lived connections. Use TLS at the public edge (`wss://`).
+The frontend, backend, and WebSocket service must use the same `FRONTEND_ORIGIN`; the backend and WebSocket service must use the same `JWT_SECRET` and database. Set the frontend's `NEXT_PUBLIC_WS_URL` to the public WSS URL. The frontend requests a short-lived ticket through its authenticated API proxy, so the socket URL can be on a separate hostname. Configure the proxy/load balancer to support HTTP/1.1 WebSocket upgrades and long-lived connections. Use TLS at the public edge (`wss://`).
 
 Configure a liveness probe for `GET /healthz` and a readiness probe for `GET /readyz`. Readiness returns 200 when the HTTP service is running and its PostgreSQL notification listener is connected; it returns 503 while starting, reconnecting, or shutting down. On SIGINT/SIGTERM the process closes WebSocket connections and disconnects Prisma.
 
@@ -51,7 +53,7 @@ See [DATA_FLOW.md](./DATA_FLOW.md) for connection authorization, snapshots, even
 
 ## Operational notes
 
-- A connected socket is authenticated from the `accessToken` cookie. Board connections also require current organization membership, which is checked at connect and rechecked every 60 seconds.
+- A connected socket is authenticated by a scoped socket ticket; same-host cookie connections remain supported. Board connections also require current organization membership, which is checked at connect and rechecked every 60 seconds.
 - PostgreSQL stores all board state. In-memory state holds only live connections, presence and messages waiting for a just-connected client's snapshot.
 - PostgreSQL `LISTEN/NOTIFY` broadcasts REST and WebSocket mutations between service instances. Notifications are not a durable queue; reconnecting clients receive a fresh database snapshot.
 - Presence is held in memory per service instance. If the deployment runs multiple WebSocket instances, configure sticky WebSocket routing if users need a unified presence list across instances. Board data events still fan out between instances through PostgreSQL.

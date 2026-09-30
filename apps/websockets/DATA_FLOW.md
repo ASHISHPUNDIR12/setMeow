@@ -9,9 +9,9 @@ The service is a standalone HTTP server with WebSocket upgrades. It exposes two 
 - `GET /boards/:boardId` opens a board room.
 - `GET /users/me` opens the authenticated user's invitation inbox room.
 
-Before upgrading, the service validates the route and UUID, checks the request `Origin` against `FRONTEND_ORIGIN` (an absent Origin is allowed for non-browser clients), reads the `accessToken` cookie, verifies its JWT signature with `JWT_SECRET`, and requires a UUID subject. A board socket additionally looks up the board and confirms the user belongs to its organization. Unknown boards return 404, missing/invalid sessions return 401, and non-members return 403. Upgrade failures caused by a database error return 503.
+Before upgrading, the service validates the route and UUID, checks the request `Origin` against `FRONTEND_ORIGIN` (an absent Origin is allowed for non-browser clients), verifies the scoped ticket in the `ticket` query parameter using `JWT_SECRET`, and requires a UUID subject. Existing same-host cookie authentication remains supported. A board socket additionally looks up the board and confirms the user belongs to its organization. Unknown boards return 404, missing/invalid sessions return 401, and non-members return 403. Upgrade failures caused by a database error return 503.
 
-The JWT expiration is enforced during the connection heartbeat. Board membership is rechecked every 60 seconds; a revoked member's socket closes with code 1008. Every 30 seconds the service pings sockets and terminates clients that did not respond to the previous ping.
+Before every connection attempt, the frontend sends `POST /api/auth/socket-ticket` with the intended socket path. The backend verifies the HttpOnly session cookie and returns a path-scoped JWT with audience `setmeow-websocket`, a maximum handshake lifetime of 60 seconds, and the original session expiration. Socket tickets cannot authenticate REST requests or other socket paths. After the handshake, the original session expiration is enforced during the connection heartbeat. Ticket query parameters should be redacted from custom access logs. Board membership is rechecked every 60 seconds; a revoked member's socket closes with code 1008. Every 30 seconds the service pings sockets and terminates clients that did not respond to the previous ping.
 
 ## Board connection and snapshot ordering
 

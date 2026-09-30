@@ -57,7 +57,7 @@ NEXT_PUBLIC_WS_URL=ws://localhost:3002
 
 Browser REST calls use `/api/*`, which Next.js rewrites to `API_URL` (with legacy `NEXT_PUBLIC_API_URL` as a fallback). Set `API_URL` when building and running the frontend. This keeps the backend’s HttpOnly session cookie on the frontend host, allowing server pages to verify it.
 
-The frontend origin must match `FRONTEND_ORIGIN` in both backend and WebSocket service environments. In production, use HTTPS/WSS. Serve the WebSocket endpoint on the same hostname as the frontend (a separate port or reverse-proxied path is fine), because its authentication also uses this host-only session cookie. A separate socket hostname will not receive it.
+The frontend origin must match `FRONTEND_ORIGIN` in both backend and WebSocket service environments. In production, use HTTPS/WSS. The browser requests a short-lived socket ticket through `/api/auth/socket-ticket`, then connects directly to the WebSocket service. The WebSocket hostname can differ from the frontend; the session cookie stays on the frontend hostname.
 
 ## Production deployment
 
@@ -87,11 +87,11 @@ Set these variables in the frontend deployment environment before building, sinc
 | Variable | Example | Purpose |
 | --- | --- | --- |
 | `API_URL` | `https://api.example.com` | Backend origin reachable from the Next.js server for the `/api/*` rewrite and server-side session checks. An internal service URL is suitable. Do not include a trailing slash. |
-| `NEXT_PUBLIC_WS_URL` | `wss://app.example.com` | Browser WebSocket origin/base path. The app appends `/boards/{boardId}`; if using a proxy path prefix, configure the proxy to route that complete path to the WebSocket service. It must use the **same hostname** as the frontend so the browser sends the host-only session cookie. |
+| `NEXT_PUBLIC_WS_URL` | `wss://setmeow-sockets.onrender.com` | Browser WebSocket origin/base path. The app appends `/boards/{boardId}` or `/users/me` and authenticates using a scoped ticket. A separate hostname is supported. |
 
 The sample `.env.example` contains local development values; replace them with the production origins in your hosting provider's build environment. `NEXT_PUBLIC_API_URL` is supported as a legacy fallback when `API_URL` is unset, but new deployments should use `API_URL`. Never put backend secrets, database credentials, or JWT signing keys in frontend variables.
 
-Configure the backend with `FRONTEND_ORIGIN` set to the exact public frontend origin (for example, `https://app.example.com`). Configure the WebSocket service with the same `FRONTEND_ORIGIN`. Both services must use the same JWT secret as required by their configuration, and the browser-facing backend and socket endpoints must use HTTPS/WSS in production. If the socket service runs on another host internally, route it through the frontend hostname using the platform's reverse proxy.
+Configure the backend with `FRONTEND_ORIGIN` set to the exact public frontend origin (for example, `https://app.example.com`). Configure the WebSocket service with the same `FRONTEND_ORIGIN`. Both services must use the same JWT secret as required by their configuration, and the browser-facing backend and socket endpoints must use HTTPS/WSS in production. Board and inbox sockets fetch a fresh ticket before each connection attempt, including reconnects.
 
 After deployment, verify `/signin` loads, sign-in returns to the app, a protected workspace page loads after authentication, and a board receives live updates from a second session. Application route checks can also be run from `apps/frontend` with `node --test tests/routing.test.mjs`.
 

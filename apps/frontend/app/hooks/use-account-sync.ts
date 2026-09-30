@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { api, WEBSOCKET_URL } from "../lib/api";
+import { api } from "../lib/api";
+import { openRealtimeSocket } from "../lib/realtime";
 import type {
   OrganizationMembership,
   Invitation,
@@ -11,12 +12,7 @@ import type { DashboardState } from "./use-dashboard-state";
 import { messageOf } from "./errors";
 
 export function useAccountSync(state: DashboardState) {
-  const {
-    setMemberships,
-    setInvitations,
-    setSignedIn,
-    setError,
-  } = state;
+  const { setMemberships, setInvitations, setSignedIn, setError } = state;
   const refreshAccount = useCallback(async () => {
     const [organizations, inbox] = await Promise.all([
       api<{ allOrganization: OrganizationMembership[] }>("/v1/organizations"),
@@ -47,12 +43,32 @@ export function useAccountSync(state: DashboardState) {
     let socket: WebSocket | undefined;
     let timer = 0;
     let attempts = 0;
-    const connect = () => {
+    const controller = new AbortController();
+    const reconnect = () => {
       if (!active) return;
-      socket = new WebSocket(`${WEBSOCKET_URL.replace(/\/$/, "")}/users/me`);
+      attempts += 1;
+      timer = window.setTimeout(
+        () => void connect(),
+        Math.min(1000 * 2 ** Math.min(attempts, 4), 15000),
+      );
+    };
+    const connect = async () => {
+      if (!active) return;
+      try {
+        socket = await openRealtimeSocket("/users/me", controller.signal);
+      } catch {
+        reconnect();
+        return;
+      }
+      if (!active) {
+        socket.close();
+        return;
+      }
       socket.onopen = () => {
         attempts = 0;
-        void refreshAccount().catch((cause) => setError(messageOf(cause)));
+        void refreshAccount().catch((cause) => {
+          if (active) setError(messageOf(cause));
+        });
       };
       socket.onmessage = (event) => {
         let message: SocketMessage;
@@ -62,20 +78,16 @@ export function useAccountSync(state: DashboardState) {
           return;
         }
         if (message.type === "invitation_changed")
-          void refreshAccount().catch((cause) => setError(messageOf(cause)));
+          void refreshAccount().catch((cause) => {
+            if (active) setError(messageOf(cause));
+          });
       };
-      socket.onclose = () => {
-        if (!active) return;
-        attempts += 1;
-        timer = window.setTimeout(
-          connect,
-          Math.min(1000 * 2 ** Math.min(attempts, 4), 15000),
-        );
-      };
+      socket.onclose = reconnect;
     };
-    connect();
+    void connect();
     return () => {
       active = false;
+      controller.abort();
       window.clearTimeout(timer);
       socket?.close();
     };

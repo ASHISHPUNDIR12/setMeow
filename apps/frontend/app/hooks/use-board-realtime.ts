@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { api, WEBSOCKET_URL } from "../lib/api";
+import { api } from "../lib/api";
+import { openRealtimeSocket } from "../lib/realtime";
 import type { Issue, Section, SocketMessage } from "../lib/types";
 import type { DashboardState } from "./use-dashboard-state";
 import { handleBoardEvent } from "./board-event-handler";
@@ -60,12 +61,33 @@ export function useBoardRealtime(state: DashboardState) {
     let active = true;
     let reconnectTimer = 0;
     let attempts = 0;
-    const connect = () => {
+    const controller = new AbortController();
+    const reconnect = () => {
       if (!active) return;
       setConnection("connecting");
-      const nextSocket = new WebSocket(
-        `${WEBSOCKET_URL.replace(/\/$/, "")}/boards/${boardId}`,
+      attempts += 1;
+      reconnectTimer = window.setTimeout(
+        () => void connect(),
+        Math.min(1000 * 2 ** Math.min(attempts, 4), 15000),
       );
+    };
+    const connect = async () => {
+      if (!active) return;
+      setConnection("connecting");
+      let nextSocket: WebSocket;
+      try {
+        nextSocket = await openRealtimeSocket(
+          `/boards/${boardId}`,
+          controller.signal,
+        );
+      } catch {
+        reconnect();
+        return;
+      }
+      if (!active) {
+        nextSocket.close();
+        return;
+      }
       socket.current = nextSocket;
       nextSocket.onopen = () => {
         attempts = 0;
@@ -83,15 +105,7 @@ export function useBoardRealtime(state: DashboardState) {
       nextSocket.onerror = () => {
         if (active) setConnection("connecting");
       };
-      nextSocket.onclose = () => {
-        if (!active) return;
-        setConnection("connecting");
-        attempts += 1;
-        reconnectTimer = window.setTimeout(
-          connect,
-          Math.min(1000 * 2 ** Math.min(attempts, 4), 15000),
-        );
-      };
+      nextSocket.onclose = reconnect;
     };
     void Promise.all([
       api<{ sections: Section[] }>(`/v1/sections?boardId=${boardId}`),
@@ -108,10 +122,11 @@ export function useBoardRealtime(state: DashboardState) {
       .finally(() => {
         if (!active) return;
         setLoadingBoard(false);
-        connect();
+        void connect();
       });
     return () => {
       active = false;
+      controller.abort();
       window.clearTimeout(reconnectTimer);
       socket.current?.close();
       socket.current = null;

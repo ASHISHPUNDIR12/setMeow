@@ -22,7 +22,11 @@ export async function api<T = unknown>(
   const data: { message?: string } | null =
     response.status === 204 ? null : await response.json().catch(() => null);
 
-  if (response.status === 401 && !path.startsWith("/auth/") && typeof window !== "undefined") {
+  if (
+    response.status === 401 &&
+    (!path.startsWith("/auth/") || path === "/auth/socket-ticket") &&
+    typeof window !== "undefined"
+  ) {
     const returnTo = window.location.pathname + window.location.search;
     window.location.replace(`/signin?next=${encodeURIComponent(returnTo)}`);
   }

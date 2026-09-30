@@ -1,12 +1,12 @@
 import "dotenv/config";
-import { createServer, type IncomingMessage } from "node:http";
+import { createServer } from "node:http";
 import { URL } from "node:url";
-import jwt from "jsonwebtoken";
 import { Client } from "pg";
 import { WebSocket, WebSocketServer } from "ws";
 import { z } from "zod";
 import { prisma } from "db/client";
 import { ISSUE_EVENTS_CHANNEL, moveIssue } from "db/move";
+import { authenticateSocket } from "./auth";
 
 const uuid = z.uuid();
 const moveMessage = z
@@ -42,18 +42,6 @@ const send = (socket: WebSocket, payload: unknown) => {
     socket.send(JSON.stringify(payload));
 };
 
-function tokenFromCookie(req: IncomingMessage) {
-  const cookie = req.headers.cookie
-    ?.split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith("accessToken="));
-  if (!cookie) return null;
-  try {
-    return decodeURIComponent(cookie.slice("accessToken=".length));
-  } catch {
-    return null;
-  }
-}
 function reject(socket: import("node:stream").Duplex, status: number) {
   const reason =
     {
@@ -224,33 +212,20 @@ export async function startRealtimeServer(options: { port?: number } = {}) {
         reject(socket, 403);
         return;
       }
-      const token = tokenFromCookie(req);
-      if (!token) {
-        reject(socket, 401);
-        return;
-      }
-      let claims: string | jwt.JwtPayload;
+      let identity: ReturnType<typeof authenticateSocket>;
       try {
-        claims = jwt.verify(token, secret);
+        identity = authenticateSocket(req, pathname, secret);
       } catch {
         reject(socket, 401);
         return;
       }
-      if (
-        typeof claims === "string" ||
-        typeof claims.sub !== "string" ||
-        !uuid.safeParse(claims.sub).success
-      ) {
-        reject(socket, 401);
-        return;
-      }
       if (isUserRoom) {
-        const userId = claims.sub;
+        const userId = identity.userId;
         wss.handleUpgrade(req, socket, head, (ws) => {
           const connections = userRooms.get(userId) ?? new Set<UserSession>();
           const userSession: UserSession = {
             socket: ws,
-            expiresAt: claims.exp ? claims.exp * 1000 : undefined,
+            expiresAt: identity.expiresAt,
             alive: true,
           };
           connections.add(userSession);
@@ -274,7 +249,7 @@ export async function startRealtimeServer(options: { port?: number } = {}) {
         reject(socket, 404);
         return;
       }
-      const userId = claims.sub;
+      const userId = identity.userId;
       if (!userId) {
         reject(socket, 401);
         return;
@@ -299,7 +274,7 @@ export async function startRealtimeServer(options: { port?: number } = {}) {
           boardId: roomBoardId,
           organizationId: board.organizationId,
           user: membership.user,
-          expiresAt: claims.exp ? claims.exp * 1000 : undefined,
+          expiresAt: identity.expiresAt,
           ready: false,
           pending: [],
           alive: true,
@@ -413,10 +388,13 @@ export async function startRealtimeServer(options: { port?: number } = {}) {
   try {
     await new Promise<void>((resolve, rejectListen) => {
       server.once("error", rejectListen);
-      server.listen(options.port ?? Number(process.env.WS_PORT ?? 3002), () => {
-        server.off("error", rejectListen);
-        resolve();
-      });
+      server.listen(
+        options.port ?? Number(process.env.WS_PORT ?? process.env.PORT ?? 3002),
+        () => {
+          server.off("error", rejectListen);
+          resolve();
+        },
+      );
     });
   } catch (error) {
     clearInterval(heartbeat);
