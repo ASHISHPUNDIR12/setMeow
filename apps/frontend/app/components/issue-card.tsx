@@ -53,7 +53,7 @@ export function IssueCard({
           {tag}
         </span>
         <button
-          className="h-5.5 w-6 cursor-pointer rounded-lg border-0 bg-transparent text-[19px] leading-none text-[#aaa491] hover:bg-[#f2eedf] dark:hover:bg-[#39352a]"
+          className="h-5.5 w-6 max-sm:size-9 cursor-pointer rounded-lg border-0 bg-transparent text-[19px] leading-none text-[#aaa491] hover:bg-[#f2eedf] dark:hover:bg-[#39352a]"
           onClick={() => onOpen(issue)}
           aria-label={`Open ${issue.title}`}
         >
@@ -61,13 +61,13 @@ export function IssueCard({
         </button>
       </div>
       <button
-        className="block w-full cursor-pointer border-0 bg-transparent p-0 text-left text-xs leading-normal font-bold text-[#46443a] dark:text-[#e8e1d0]"
+        className="block w-full cursor-pointer [overflow-wrap:anywhere] border-0 bg-transparent p-0 text-left text-xs leading-normal font-bold text-[#46443a] dark:text-[#e8e1d0]"
         onClick={() => onOpen(issue)}
       >
         {issue.title}
       </button>
       {issue.description && (
-        <p className="mt-1 mb-2.5 line-clamp-2 text-[10px] leading-normal text-[#969182]">
+        <p className="mt-1 mb-2.5 line-clamp-2 text-[10px] [overflow-wrap:anywhere] leading-normal text-[#969182]">
           {issue.description}
         </p>
       )}
@@ -75,7 +75,7 @@ export function IssueCard({
         <span className="text-[8px] font-bold tracking-[0.06em] text-[#aaa595]">
           {issue.id.slice(0, 7).toUpperCase()}
         </span>
-        <label className="relative flex items-center text-[11px] text-[#9a927b] hover:text-[#7f6a2c]">
+        <label className="relative flex min-h-9 min-w-9 items-center justify-center rounded-lg text-[11px] max-sm:min-h-11 max-sm:min-w-11 text-[#9a927b] hover:text-[#7f6a2c]">
           <span className="sr-only">Move {issue.title}</span>
           <select
             className="absolute inset-0 w-full cursor-pointer opacity-0"

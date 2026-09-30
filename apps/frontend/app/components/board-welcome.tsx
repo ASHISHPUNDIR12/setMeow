@@ -62,9 +62,12 @@ export function BoardWelcome({
         </button>
       )}
       {kind === "section" && (
-        <form className="flex gap-2 w-full" onSubmit={onCreateSection}>
+        <form
+          className="flex flex-wrap gap-2 w-full"
+          onSubmit={onCreateSection}
+        >
           <input
-            className="min-w-0 flex-1 rounded-xl border border-line bg-input px-3 text-xs"
+            className="min-h-11 min-w-0 basis-36 flex-1 rounded-xl border border-line bg-input px-3 text-xs"
             name="title"
             aria-label="Section name"
             placeholder="Section name"

@@ -45,7 +45,7 @@ export function BoardColumn(props: BoardColumnProps) {
   } = props;
   return (
     <section
-      className={`min-h-80 w-[275px] min-w-[275px] rounded-[19px] border border-white/65 p-3 dark:border-line dark:bg-[#2b2923] max-sm:w-[min(81vw,292px)] max-sm:min-w-[min(81vw,292px)] ${columnColors[index % columnColors.length]}`}
+      className={`min-h-80 min-w-0 shrink-0 snap-start w-[275px] rounded-[19px] border border-white/65 p-3 dark:border-line dark:bg-[#2b2923] max-sm:w-[min(81vw,292px)] ${columnColors[index % columnColors.length]}`}
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => {
         event.preventDefault();
@@ -55,14 +55,14 @@ export function BoardColumn(props: BoardColumnProps) {
       }}
     >
       <header className="flex items-center justify-between px-1 pt-0.5 pb-3">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-start gap-2">
           <span
-            className={`size-2 rounded-full ${dotColors[index % dotColors.length]}`}
+            className={`mt-1 size-2 shrink-0 rounded-full ${dotColors[index % dotColors.length]}`}
           />
-          <h2 className="text-[11px] font-extrabold text-[#615d50] dark:text-[#e1dac8]">
+          <h2 className="min-w-0 text-[11px] font-extrabold [overflow-wrap:anywhere] text-[#615d50] dark:text-[#e1dac8]">
             {section.title}
           </h2>
-          <span className="inline-grid h-5 min-w-5 place-items-center rounded-lg bg-white/60 px-1 text-[9px] font-bold text-[#938d7d] dark:bg-[#403b30] dark:text-[#c2baa8]">
+          <span className="inline-grid h-5 min-w-5 shrink-0 place-items-center rounded-lg bg-white/60 px-1 text-[9px] font-bold text-[#938d7d] dark:bg-[#403b30] dark:text-[#c2baa8]">
             {issues.length}
           </span>
         </div>
@@ -109,7 +109,7 @@ export function BoardColumn(props: BoardColumnProps) {
           maxLength={100}
         />
         <button
-          className="size-6 shrink-0 cursor-pointer rounded-lg border-0 bg-[#e6e1d2] text-[#817967] opacity-0 dark:bg-[#494333] dark:text-[#d0c6af]"
+          className="size-6 shrink-0 cursor-pointer rounded-lg border-0 bg-[#e6e1d2] text-[#817967] opacity-0 max-sm:size-9 max-sm:opacity-100 dark:bg-[#494333] dark:text-[#d0c6af]"
           type="submit"
           aria-label={`Add issue to ${section.title}`}
         >

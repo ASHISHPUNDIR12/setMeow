@@ -45,7 +45,7 @@ export function CreateWorkspaceDialogs(props: CreateWorkspaceDialogsProps) {
                 placeholder="What are you working on together?"
               />
             </label>
-            <div className="mt-1.5 flex justify-end gap-2">
+            <div className="mt-1.5 flex flex-wrap justify-end gap-2">
               <button
                 type="button"
                 className={buttonStyles.quiet}
@@ -83,7 +83,7 @@ export function CreateWorkspaceDialogs(props: CreateWorkspaceDialogsProps) {
                 placeholder="Product launch"
               />
             </label>
-            <div className="mt-1.5 flex justify-end gap-2">
+            <div className="mt-1.5 flex flex-wrap justify-end gap-2">
               <button
                 type="button"
                 className={buttonStyles.quiet}

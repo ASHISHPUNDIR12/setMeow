@@ -46,15 +46,15 @@ export function AuthScreen(props: AuthScreenProps) {
     oauthMessage,
   } = props;
   return (
-    <main className="relative grid min-h-svh grid-cols-[minmax(0,1fr)_minmax(360px,500px)] items-center gap-[clamp(28px,6vw,80px)] overflow-x-clip p-[clamp(20px,4vw,56px)] max-lg:grid-cols-[minmax(0,0.8fr)_minmax(350px,1fr)] max-lg:gap-8 max-lg:p-8 max-sm:flex max-sm:justify-center max-sm:p-4 short:py-4.5">
+    <main className="relative grid min-h-svh grid-cols-[minmax(0,1fr)_minmax(360px,500px)] items-center gap-[clamp(28px,6vw,80px)] overflow-x-clip p-[clamp(20px,4vw,56px)] max-lg:flex max-lg:justify-center max-lg:px-6 max-lg:py-16 max-sm:px-4 short:py-4.5">
       <AuthArtwork />
-      <section className="w-full max-w-[460px] p-[clamp(25px,3vw,38px)] max-sm:max-w-[440px] max-sm:px-5.5 max-sm:py-7 short:px-7.5 short:py-5.5 rounded-3xl border border-white/85 bg-surface shadow-clay dark:border-line dark:shadow-none">
-        <div className="absolute top-5 right-6 max-sm:top-3 max-sm:right-3">
+      <section className="min-w-0 w-full max-w-[460px] p-[clamp(25px,3vw,38px)] max-lg:max-w-[460px] max-sm:max-w-[440px] max-sm:px-5.5 max-sm:py-7 short:px-7.5 short:py-5.5 rounded-3xl border border-white/85 bg-surface shadow-clay dark:border-line dark:shadow-none">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-[17px] font-extrabold tracking-tight text-[#514b38] dark:text-[#e4decd]">
+            <PawLogo />
+            <span>setmeow</span>
+          </div>
           <ThemeToggle theme={theme} onToggle={onThemeToggle} />
-        </div>
-        <div className="flex items-center gap-2 text-[17px] font-extrabold tracking-tight text-[#514b38] dark:text-[#e4decd]">
-          <PawLogo />
-          <span>setmeow</span>
         </div>
         <p className="mt-6 mb-2 short:mt-4 text-[10px] font-extrabold tracking-[0.15em] text-[#9b895a] uppercase">
           A calmer way to get things done
@@ -89,7 +89,7 @@ export function AuthScreen(props: AuthScreenProps) {
             GitHub
           </a>
         </div>
-        <div className="my-5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#9a968a]">
+        <div className="my-5 flex items-center gap-3 text-[10px] text-center font-bold uppercase tracking-[0.12em] text-[#9a968a]">
           <span className="h-px flex-1 bg-line" />
           <span>or continue with email</span>
           <span className="h-px flex-1 bg-line" />

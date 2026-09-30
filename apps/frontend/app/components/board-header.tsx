@@ -43,15 +43,15 @@ export function BoardHeader(props: BoardHeaderProps) {
   } = props;
   return (
     <>
-      <header className="flex min-h-18 items-center justify-between gap-5 border-b border-line max-sm:min-h-14 max-sm:flex-wrap max-sm:gap-2 max-sm:py-2">
-        <div className="flex items-center gap-2.5 text-[11px] text-[#9c9789]">
+      <header className="flex min-h-18 flex-wrap items-center justify-between gap-x-5 gap-y-3 border-b border-line py-3 max-sm:min-h-14">
+        <div className="flex min-w-0 flex-wrap items-center gap-2.5 text-[11px] [overflow-wrap:anywhere] text-[#9c9789]">
           <span>{organizationName || "Workspace"}</span>
           <b className="font-medium text-[#d0caba]">/</b>
           <strong className="font-bold text-[#575345] dark:text-[#e1dac8]">
             {boardTitle || "Board"}
           </strong>
         </div>
-        <div className="flex items-center gap-[clamp(13px,2vw,25px)] max-sm:gap-2">
+        <div className="flex max-w-full flex-wrap items-center gap-x-[clamp(13px,2vw,25px)] gap-y-2 max-sm:gap-x-3">
           <ThemeToggle theme={theme} onToggle={onThemeToggle} />
           <span className="flex items-center gap-1.5 text-[10px] text-[#a19b8c]">
             <i
@@ -83,7 +83,7 @@ export function BoardHeader(props: BoardHeaderProps) {
           </div>
           {isAdmin && (
             <button
-              className="inline-flex min-h-8.5 cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-3 text-[11px] font-bold bg-[#f4f0e1] shadow-sm dark:bg-[#403b30] dark:text-[#e1dac8] max-sm:min-h-8"
+              className="inline-flex min-h-8.5 cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-3 text-[11px] font-bold bg-[#f4f0e1] shadow-sm dark:bg-[#403b30] dark:text-[#e1dac8] max-sm:min-h-11"
               onClick={onInvite}
             >
               <span>＋</span> Invite
@@ -91,24 +91,24 @@ export function BoardHeader(props: BoardHeaderProps) {
           )}
         </div>
       </header>
-      <div className="flex items-end justify-between gap-5 pt-11 pb-8 max-lg:pt-8 max-sm:items-start max-sm:pt-7 max-sm:pb-5">
-        <div>
+      <div className="flex items-end justify-between gap-5 pt-11 pb-8 max-lg:pt-8 max-sm:flex-col max-sm:items-start max-sm:gap-4 max-sm:pt-7 max-sm:pb-5">
+        <div className="min-w-0 max-w-full [overflow-wrap:anywhere]">
           <p className="mb-2 text-[10px] font-extrabold tracking-[0.15em] text-[#9b895a] uppercase">
             {organizationName || "Your workspace"}
           </p>
           <h1 className="text-[clamp(29px,3.3vw,40px)] leading-tight font-semibold tracking-[-0.065em] max-sm:text-3xl">
             {boardTitle || "Your board"}
           </h1>
-          <p className="mt-2 text-xs text-muted max-sm:max-w-[230px] max-sm:leading-normal">
+          <p className="mt-2 text-xs text-muted max-sm:leading-normal">
             A clear view of what’s moving and what’s next.
           </p>
         </div>
-        <div className="flex items-center gap-4 max-sm:pt-5">
+        <div className="flex shrink-0 items-center gap-4">
           <span className="flex items-center gap-2 text-[10px] whitespace-nowrap text-[#8d866f] max-lg:hidden">
             <span className="text-base text-[#d7ae32]">✳</span> Keep it moving
           </span>
           <button
-            className={`${buttonStyles.primary} max-sm:min-h-9! max-sm:px-2.5! max-sm:text-[10px]! max-sm:whitespace-nowrap!`}
+            className={`${buttonStyles.primary} max-sm:min-h-11! max-sm:whitespace-nowrap!`}
             onClick={onNewIssue}
             disabled={!boardTitle}
           >
@@ -121,9 +121,11 @@ export function BoardHeader(props: BoardHeaderProps) {
           className={`-mt-3 mb-5 flex items-center justify-between gap-4 rounded-xl border bg-surface px-3.5 py-3 text-xs shadow-sm max-sm:-mt-1 ${error ? "border-[#efd6ca] text-[#9a4e3c] dark:border-[#69463d] dark:text-[#edb5a5]" : "border-line text-[#687c5f] dark:text-[#bed0ae]"}`}
           role={error ? "alert" : "status"}
         >
-          {error || notice}
+          <span className="min-w-0 [overflow-wrap:anywhere]">
+            {error || notice}
+          </span>
           <button
-            className="cursor-pointer border-0 bg-transparent text-lg"
+            className="size-9 shrink-0 cursor-pointer border-0 bg-transparent text-lg"
             onClick={onDismissMessage}
             aria-label="Dismiss"
           >

@@ -77,7 +77,7 @@ export function BoardContent(props: BoardContentProps) {
   }
 
   return (
-    <div className="w-full">
+    <div className="min-w-0 w-full">
       <div className="flex items-center justify-between px-px pb-3 text-[10px] text-[#9b9686]">
         <span>
           <b className="font-extrabold text-[#635d4c] dark:text-[#e1dac8]">
@@ -90,7 +90,7 @@ export function BoardContent(props: BoardContentProps) {
         </span>
       </div>
       <div
-        className="flex items-start gap-4.5 overflow-x-auto px-1 pt-2 pb-8 [scrollbar-color:#ded7c4_transparent] [scrollbar-width:thin] max-sm:-mx-1 max-sm:gap-3"
+        className="flex max-w-full items-start gap-4.5 overflow-x-auto overscroll-x-contain snap-x snap-proximity px-1 pt-2 pb-8 [scrollbar-color:#ded7c4_transparent] [scrollbar-width:thin] max-sm:-mx-1 max-sm:gap-3"
         aria-label="Issue board"
       >
         {orderedSections.map((section, index) => (
@@ -110,11 +110,11 @@ export function BoardContent(props: BoardContentProps) {
         ))}
         {props.addingSection ? (
           <form
-            className="flex min-h-12 w-40 min-w-40 cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-[#d4cebc] bg-white/20 text-[10px] text-[#98917e] hover:bg-white/55 dark:border-[#514b3e] dark:bg-white/3 dark:text-[#b3aa96] dark:hover:bg-[#39352a] justify-start p-1.5"
+            className="flex min-h-12 w-40 min-w-40 cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-[#d4cebc] bg-white/20 text-[10px] text-[#98917e] hover:bg-white/55 dark:border-[#514b3e] dark:bg-white/3 dark:text-[#b3aa96] dark:hover:bg-[#39352a] justify-start p-1.5 max-sm:w-60 max-sm:min-w-60"
             onSubmit={props.onCreateSection}
           >
             <input
-              className="w-23 min-w-0 border-0 bg-transparent text-[10px] outline-none"
+              className="w-23 min-w-0 max-sm:flex-1 border-0 bg-transparent text-[10px] outline-none"
               autoFocus
               name="title"
               aria-label="Section name"
@@ -123,14 +123,14 @@ export function BoardContent(props: BoardContentProps) {
               required
             />
             <button
-              className="size-6 cursor-pointer rounded-lg border-0 bg-[#e9e4d4] text-[#7c745f] dark:bg-[#494333] dark:text-[#d0c6af]"
+              className="size-6 shrink-0 max-sm:size-9 cursor-pointer rounded-lg border-0 bg-[#e9e4d4] text-[#7c745f] dark:bg-[#494333] dark:text-[#d0c6af]"
               type="submit"
               aria-label="Save section"
             >
               ↵
             </button>
             <button
-              className="size-6 cursor-pointer rounded-lg border-0 bg-[#e9e4d4] text-[#7c745f] dark:bg-[#494333] dark:text-[#d0c6af]"
+              className="size-6 shrink-0 max-sm:size-9 cursor-pointer rounded-lg border-0 bg-[#e9e4d4] text-[#7c745f] dark:bg-[#494333] dark:text-[#d0c6af]"
               type="button"
               aria-label="Cancel"
               onClick={() => props.onAddingSectionChange(false)}

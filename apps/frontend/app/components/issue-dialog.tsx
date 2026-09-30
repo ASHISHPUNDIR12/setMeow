@@ -43,7 +43,7 @@ export function IssueDialog(props: IssueDialogProps) {
               placeholder="Add a little more context…"
             />
           </label>
-          <div className="mt-1.5 flex justify-end gap-2">
+          <div className="mt-1.5 flex flex-wrap justify-end gap-2">
             <button
               type="button"
               className={buttonStyles.danger}
@@ -56,12 +56,12 @@ export function IssueDialog(props: IssueDialogProps) {
         </form>
         <div className="my-5 h-px bg-line" />
         <div>
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h3 className="flex items-center gap-2 text-xs font-semibold text-[#5b574a] dark:text-[#e1dac8]">
               People
             </h3>
             <select
-              className="rounded-lg border-0 bg-[#f4f0e2] p-2 text-[10px] text-[#7b704e] dark:bg-[#39352b] dark:text-[#d4cbb8]"
+              className="min-w-0 max-w-full rounded-lg border-0 bg-[#f4f0e2] p-2 text-[10px] text-[#7b704e] dark:bg-[#39352b] dark:text-[#d4cbb8]"
               aria-label="Assign a member"
               value=""
               onChange={(event) => props.onAssignUser(event.target.value)}
@@ -78,13 +78,15 @@ export function IssueDialog(props: IssueDialogProps) {
             {props.issueAssignments.length ? (
               props.issueAssignments.map((assignment) => (
                 <span
-                  className="flex items-center gap-1.5 rounded-full border border-line bg-[#fbf9f0] py-1 pr-2 pl-0.5 text-[10px] text-[#716b5b] dark:bg-[#39352b] dark:text-[#d4cbb8]"
+                  className="flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-line bg-[#fbf9f0] py-1 pr-2 pl-0.5 text-[10px] text-[#716b5b] dark:bg-[#39352b] dark:text-[#d4cbb8]"
                   key={assignment.userId}
                 >
                   <Avatar name={assignment.user.username} small />
-                  {assignment.user.username}
+                  <span className="min-w-0 truncate">
+                    {assignment.user.username}
+                  </span>
                   <button
-                    className="size-4 cursor-pointer rounded-full border-0 bg-[#eeeadd] leading-none text-[#8b8474] dark:bg-[#494333] dark:text-[#d4cbb8]"
+                    className="size-4 shrink-0 max-sm:size-8 cursor-pointer rounded-full border-0 bg-[#eeeadd] leading-none text-[#8b8474] dark:bg-[#494333] dark:text-[#d4cbb8]"
                     onClick={() => props.onRemoveAssignment(assignment.userId)}
                     aria-label={`Remove ${assignment.user.username}`}
                   >
@@ -99,7 +101,7 @@ export function IssueDialog(props: IssueDialogProps) {
         </div>
         <div className="my-5 h-px bg-line" />
         <div>
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h3 className="flex items-center gap-2 text-xs font-semibold text-[#5b574a] dark:text-[#e1dac8]">
               Conversation{" "}
               <span className="inline-grid h-5 min-w-5 place-items-center rounded-lg bg-white/60 px-1 text-[9px] font-bold text-[#938d7d] dark:bg-[#403b30] dark:text-[#c2baa8]">
@@ -112,7 +114,7 @@ export function IssueDialog(props: IssueDialogProps) {
               <article className="flex items-start gap-2" key={comment.id}>
                 <Avatar name={comment.user.username} small />
                 <div className="min-w-0">
-                  <strong className="text-[10px] text-[#615c4f] dark:text-[#d4cbb8]">
+                  <strong className="text-[10px] [overflow-wrap:anywhere] text-[#615c4f] dark:text-[#d4cbb8]">
                     {comment.user.username}
                   </strong>
                   <p className="mt-1 text-[11px] leading-relaxed text-[#7e796c] [overflow-wrap:anywhere] dark:text-muted">

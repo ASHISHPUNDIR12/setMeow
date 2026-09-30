@@ -55,7 +55,7 @@ export function InvitationViews(props: InvitationViewsProps) {
                   placeholder="teammate@company.com"
                 />
               </label>
-              <div className="mt-1.5 flex justify-end gap-2">
+              <div className="mt-1.5 flex flex-wrap justify-end gap-2">
                 <button
                   type="button"
                   className={buttonStyles.quiet}
@@ -75,7 +75,6 @@ export function InvitationViews(props: InvitationViewsProps) {
           )}
         </Modal>
       )}
-
     </>
   );
 }

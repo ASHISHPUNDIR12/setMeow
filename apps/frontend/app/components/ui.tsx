@@ -11,7 +11,7 @@ export function ThemeToggle({
 }) {
   return (
     <button
-      className="inline-flex min-h-8.5 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface px-3 text-[11px] font-bold whitespace-nowrap text-ink shadow-sm max-sm:min-h-8 max-sm:px-2"
+      className="inline-flex min-h-8.5 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface px-3 text-[11px] font-bold whitespace-nowrap text-ink shadow-sm max-sm:min-h-11 max-sm:px-3"
       onClick={onToggle}
       aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
       aria-pressed={theme === "dark"}
@@ -102,21 +102,23 @@ export function Modal({
   }, []);
   return (
     <div
-      className="fixed inset-0 z-20 grid place-items-center overflow-y-auto bg-stone-900/15 p-6 backdrop-blur-[2px] dark:bg-black/60 max-sm:items-end max-sm:p-2.5"
+      className="fixed inset-0 z-20 grid place-items-center overscroll-contain overflow-y-auto bg-stone-900/15 p-6 backdrop-blur-[2px] dark:bg-black/60 max-sm:items-end max-sm:p-2.5 max-sm:pb-[max(0.625rem,env(safe-area-inset-bottom))]"
       onMouseDown={(event) => event.target === event.currentTarget && close()}
     >
       <section
         ref={dialogRef}
-        className="max-h-[min(90vh,850px)] w-full max-w-[490px] overflow-y-auto rounded-3xl border border-line bg-surface p-6 shadow-modal max-sm:max-h-[88vh] max-sm:p-5"
+        className="max-h-[min(90dvh,850px)] min-w-0 w-full max-w-[490px] overscroll-contain overflow-y-auto rounded-3xl border border-line bg-surface p-6 shadow-modal max-sm:max-h-[calc(100dvh-2rem)] max-sm:p-5"
         role="dialog"
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
       >
         <div className="flex items-start justify-between gap-4">
-          <h2 className="text-[21px] font-semibold tracking-tight">{title}</h2>
+          <h2 className="min-w-0 text-[21px] font-semibold tracking-tight [overflow-wrap:anywhere]">
+            {title}
+          </h2>
           <button
-            className="inline-grid size-8 shrink-0 cursor-pointer place-items-center rounded-xl border-0 bg-transparent p-0 text-[22px] leading-none text-[#817c6c] hover:bg-[#f2eedf] dark:hover:bg-[#383429]"
+            className="inline-grid size-8 max-sm:size-11 shrink-0 cursor-pointer place-items-center rounded-xl border-0 bg-transparent p-0 text-[22px] leading-none text-[#817c6c] hover:bg-[#f2eedf] dark:hover:bg-[#383429]"
             onClick={close}
             aria-label="Close"
           >

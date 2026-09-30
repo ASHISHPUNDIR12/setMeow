@@ -13,7 +13,7 @@ export const formStyles = {
   label:
     "flex flex-col gap-2 text-[11px] font-bold text-[#5f5a4c] dark:text-[#d2cbb9]",
   input:
-    "min-h-11 w-full rounded-xl border border-line bg-input px-3 py-2.5 text-[13px] font-normal text-ink placeholder:text-[#aaa594]",
+    "min-h-11 min-w-0 w-full rounded-xl border border-line bg-input px-3 py-2.5 text-[13px] font-normal text-ink placeholder:text-[#aaa594]",
   textarea:
-    "min-h-11 w-full resize-y rounded-xl border border-line bg-input px-3 py-2.5 text-[13px] font-normal text-ink placeholder:text-[#aaa594]",
+    "min-h-11 min-w-0 w-full resize-y rounded-xl border border-line bg-input px-3 py-2.5 text-[13px] font-normal text-ink placeholder:text-[#aaa594]",
 };

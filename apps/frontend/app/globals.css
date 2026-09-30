@@ -26,6 +26,15 @@
     10px 14px 18px rgb(123 97 25 / 0.19), inset 2px 2px 5px white;
 }
 
+/* Keep form fields readable on phones without triggering input-focus zoom. */
+@media (width < 701px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 @layer base {
   [data-theme="dark"] {
     color-scheme: dark;

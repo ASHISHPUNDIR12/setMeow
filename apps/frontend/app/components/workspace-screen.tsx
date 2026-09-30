@@ -16,7 +16,7 @@ export function WorkspaceScreen({
 }) {
   const { state } = app;
   return (
-    <main className="grid min-h-screen grid-cols-[250px_minmax(0,1fr)] max-lg:grid-cols-[215px_minmax(0,1fr)] max-sm:flex max-sm:flex-col">
+    <main className="grid min-h-dvh grid-cols-[250px_minmax(0,1fr)] max-lg:grid-cols-[215px_minmax(0,1fr)] max-sm:flex max-sm:flex-col">
       <WorkspaceSidebar
         memberships={state.memberships}
         organizationId={state.organizationId}
