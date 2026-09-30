@@ -1,0 +1,119 @@
+.issue-list {
+  display: flex;
+  min-height: 60px;
+  flex-direction: column;
+  gap: 10px;
+}
+.issue-card {
+  padding: 12px;
+  cursor: grab;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+}
+.issue-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    6px 8px 15px rgba(151, 143, 117, 0.2),
+    -4px -4px 10px white;
+}
+.issue-card:active {
+  cursor: grabbing;
+}
+.issue-card.dragging {
+  opacity: 0.5;
+}
+.issue-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.issue-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: #f7edcc;
+  color: #9a7c28;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+.tag-1 {
+  background: #edf0e7;
+  color: #718368;
+}
+.tag-2 {
+  background: #f5e9e3;
+  color: #b47862;
+}
+.dots-button {
+  width: 25px;
+  height: 22px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #aaa491;
+  cursor: pointer;
+  font-size: 19px;
+  line-height: 1;
+}
+.dots-button:hover {
+  background: #f2eedf;
+}
+.issue-title {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #46443a;
+  cursor: pointer;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+.issue-description {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 5px 0 10px;
+  color: #969182;
+  font-size: 10px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.issue-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 9px;
+  border-top: 1px solid #f0ede3;
+}
+.issue-id {
+  color: #aaa595;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+}
+.move-select-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: #9a927b;
+  font-size: 11px;
+}
+.move-select-label select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.move-select-label:hover {
+  color: #7f6a2c;
+}

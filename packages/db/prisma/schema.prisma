@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                  String         @id @default(uuid())
+  email               String         @unique
+  username            String
+  passwordHash        String
+  memberships         Membership[]
+  issueMappings       IssueMapping[]
+  comments            Comment[]
+  receivedInvitations Invitation[]   @relation("InvitationRecipient")
+  sentInvitations     Invitation[]   @relation("InvitationSender")
+}
+
+model Organization {
+  id          String       @id @default(uuid())
+  name        String
+  description String
+  memberships Membership[]
+  boards      Board[]
+  invitations Invitation[]
+}
+
+model Membership {
+  id             String         @id @default(uuid())
+  userId         String
+  organizationId String
+  user           User           @relation(fields: [userId], references: [id])
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  role           MembershipRole @default(member)
+
+  @@unique([userId, organizationId])
+}
+
+enum MembershipRole {
+  admin
+  member
+}
+
+model Invitation {
+  id             String           @id @default(uuid())
+  organizationId String
+  invitedUserId  String
+  invitedById    String
+  status         InvitationStatus @default(pending)
+  createdAt      DateTime         @default(now())
+  respondedAt    DateTime?
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedUser    User             @relation("InvitationRecipient", fields: [invitedUserId], references: [id], onDelete: Cascade)
+  invitedBy      User             @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, invitedUserId])
+  @@index([invitedUserId, status])
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  declined
+}
+
+model Board {
+  id             String       @id @default(uuid())
+  title          String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  issue          Issue[]
+  section        Section[]
+}
+
+model Issue {
+  id            String         @id @default(uuid())
+  title         String
+  description   String
+  boardId       String
+  board         Board          @relation(fields: [boardId], references: [id])
+  sectionId     String
+  section       Section        @relation(fields: [sectionId], references: [id])
+  comments      Comment[]
+  issueMappings IssueMapping[]
+}
+
+model IssueMapping {
+  id      String @id @default(cuid())
+  userId  String
+  issueId String
+  user    User   @relation(fields: [userId], references: [id])
+  issue   Issue  @relation(fields: [issueId], references: [id])
+
+  @@unique([userId, issueId])
+}
+
+model Section {
+  id      String  @id @default(uuid())
+  title   String
+  boardId String
+  board   Board   @relation(fields: [boardId], references: [id])
+  issue   Issue[]
+}
+
+model Comment {
+  id      String @id @default(uuid())
+  content String
+  issueId String
+  issue   Issue  @relation(fields: [issueId], references: [id])
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+}

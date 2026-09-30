@@ -1,0 +1,115 @@
+.app-shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 250px minmax(0, 1fr);
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  padding: 27px 17px 17px;
+  border-right: 1px solid #e9e5d8;
+  background: #f8f5eb;
+}
+.sidebar-brand {
+  padding: 0 9px;
+}
+.workspace-switcher {
+  display: flex;
+  height: 57px;
+  align-items: center;
+  gap: 9px;
+  margin: 37px 0 32px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  background: #f6f2e3;
+  box-shadow:
+    inset 2px 2px 5px rgba(193, 185, 157, 0.13),
+    inset -2px -2px 5px #fff;
+}
+.org-badge {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #eed372, #e8bd3f);
+  color: #615126;
+  font-size: 13px;
+  font-weight: 850;
+}
+.workspace-switcher select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  color: #4d493d;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+}
+.side-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 7px 8px 10px;
+}
+.side-label {
+  color: #a09a88;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+}
+.board-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.board-link {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: #777365;
+  cursor: pointer;
+  text-align: left;
+  font-size: 12px;
+}
+.board-link:hover {
+  background: #f0ecdd;
+}
+.board-link.selected {
+  background: #f0e7c6;
+  color: #4d4328;
+  font-weight: 750;
+  box-shadow: inset 2px 2px 4px rgba(181, 162, 109, 0.13);
+}
+.board-symbol {
+  color: #b29543;
+  font-size: 15px;
+}
+.board-symbol-1 {
+  color: #87947b;
+}
+.board-symbol-2 {
+  color: #cf8d76;
+}
+.board-symbol-3 {
+  color: #8b96ae;
+}
+.empty-side {
+  padding: 5px 10px;
+  color: #a09b8d;
+  font-size: 11px;
+  line-height: 1.7;
+}

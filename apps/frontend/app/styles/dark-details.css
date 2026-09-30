@@ -1,0 +1,38 @@
+html[data-theme="dark"] .comment-form textarea {
+  border-color: #4b4538;
+  background: #24221d;
+  color: var(--ink);
+}
+html[data-theme="dark"] .button-soft,
+html[data-theme="dark"] .button-quiet {
+  background: #403b30;
+  color: #e1dac8;
+  box-shadow:
+    inset 1px 1px 2px rgba(255, 255, 255, 0.035),
+    2px 3px 6px rgba(0, 0, 0, 0.14);
+}
+html[data-theme="dark"] .button-danger-quiet {
+  background: #4a302a;
+  color: #efb3a0;
+}
+.auth-shell {
+  position: relative;
+}
+.auth-shell .theme-toggle {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+}
+@media (max-width: 700px) {
+  .theme-toggle {
+    min-height: 32px;
+    padding: 0 9px;
+  }
+  .topbar-right {
+    gap: 8px;
+  }
+  .auth-shell .theme-toggle {
+    top: 12px;
+    right: 12px;
+  }
+}

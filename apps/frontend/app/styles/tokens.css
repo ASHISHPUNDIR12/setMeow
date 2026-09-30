@@ -1,0 +1,126 @@
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #eee9dc;
+  --muted: #aaa493;
+  --paper: #211f1a;
+  --paper-light: #2c2922;
+  --line: #454033;
+  --yellow: #efc94f;
+  --yellow-deep: #d7ad36;
+  --green: #9eb08f;
+  --rose: #d99a83;
+  --shadow:
+    7px 8px 18px rgba(0, 0, 0, 0.23), -5px -5px 14px rgba(255, 255, 255, 0.025);
+  --shadow-small:
+    4px 5px 11px rgba(0, 0, 0, 0.23), -3px -3px 9px rgba(255, 255, 255, 0.025);
+}
+
+:root {
+  --ink: #39382f;
+  --muted: #858174;
+  --paper: #f6f3e8;
+  --paper-light: #fffdf5;
+  --line: #e9e4d3;
+  --yellow: #f0c94f;
+  --yellow-deep: #e5b936;
+  --green: #71856d;
+  --rose: #d98b73;
+  --shadow:
+    7px 8px 18px rgba(151, 143, 117, 0.17),
+    -7px -7px 17px rgba(255, 255, 250, 0.92);
+  --shadow-small:
+    4px 5px 11px rgba(151, 143, 117, 0.14),
+    -4px -4px 10px rgba(255, 255, 250, 0.9);
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  min-height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button {
+  color: inherit;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(211, 165, 43, 0.48);
+  outline-offset: 2px;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.icon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  font-size: 17px;
+}
+.clay-panel {
+  background: var(--paper-light);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+.clay-card {
+  background: #fffefa;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 17px;
+  box-shadow: var(--shadow-small);
+}
+.muted {
+  color: var(--muted);
+}
+.eyebrow {
+  margin: 0 0 9px;
+  color: #9b895a;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.fine-print {
+  color: #9a968a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.small-copy {
+  font-size: 12px;
+}

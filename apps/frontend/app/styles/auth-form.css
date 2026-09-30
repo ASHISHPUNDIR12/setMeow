@@ -1,0 +1,118 @@
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  padding: clamp(25px, 3vw, 38px);
+}
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #514b38;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.brand-mark {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--yellow);
+  box-shadow:
+    2px 3px 7px rgba(162, 127, 30, 0.2),
+    inset 1px 1px 3px rgba(255, 255, 255, 0.7);
+  font-family: Georgia, serif;
+  font-size: 21px;
+  font-style: italic;
+  font-weight: 700;
+}
+.auth-card > .eyebrow {
+  margin-top: 25px;
+}
+.auth-card h1 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 39px);
+  font-weight: 650;
+  letter-spacing: -0.06em;
+}
+.auth-card > .muted {
+  margin: 10px 0 25px;
+  font-size: 13px;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.stack label,
+.modal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #5f5a4c;
+  font-size: 11px;
+  font-weight: 750;
+}
+.stack input,
+.stack textarea,
+.stack select,
+.modal-form input,
+.modal-form textarea,
+.modal-form select {
+  width: 100%;
+  min-height: 43px;
+  border: 1px solid #e8e2ce;
+  border-radius: 11px;
+  padding: 10px 12px;
+  background: #fcfaf1;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 450;
+}
+.stack textarea,
+.modal-form textarea {
+  resize: vertical;
+}
+.stack input::placeholder,
+.modal-form input::placeholder,
+.modal-form textarea::placeholder {
+  color: #aaa594;
+}
+.auth-form {
+  margin-top: 23px;
+}
+.auth-switch {
+  margin: 20px 0 0;
+  color: #827d70;
+  text-align: center;
+  font-size: 12px;
+}
+.auth-switch button {
+  border: 0;
+  background: none;
+  color: #8b6c16;
+  cursor: pointer;
+  font-size: inherit;
+  font-weight: 800;
+}
+.auth-card .fine-print {
+  margin-top: 18px;
+  text-align: center;
+}
+.form-error {
+  margin: 0;
+  color: #a74636;
+  font-size: 12px;
+}
+.loading-screen {
+  display: grid;
+  min-height: 100vh;
+  place-content: center;
+  justify-items: center;
+  gap: 16px;
+  color: var(--muted);
+}
+.loading-screen p {
+  font-size: 13px;
+}

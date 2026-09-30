@@ -1,0 +1,30 @@
+@media (max-height: 760px) and (min-width: 701px) {
+  .auth-shell {
+    min-height: 100svh;
+    padding-block: 18px;
+  }
+  .auth-art {
+    min-height: min(500px, calc(100svh - 36px));
+  }
+  .art-sticky {
+    width: 228px;
+    height: 260px;
+    padding: 23px;
+  }
+  .auth-card {
+    padding: 22px 30px;
+  }
+  .auth-card > .eyebrow {
+    margin-top: 17px;
+  }
+  .auth-card > .muted {
+    margin-bottom: 16px;
+  }
+  .auth-form {
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .auth-card .fine-print {
+    margin-top: 12px;
+  }
+}
