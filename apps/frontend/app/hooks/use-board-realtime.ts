@@ -61,6 +61,7 @@ export function useBoardRealtime(state: DashboardState) {
     let active = true;
     let reconnectTimer = 0;
     let attempts = 0;
+    let receivedSnapshot = false;
     const controller = new AbortController();
     const reconnect = () => {
       if (!active) return;
@@ -100,6 +101,7 @@ export function useBoardRealtime(state: DashboardState) {
         } catch {
           return;
         }
+        if (message.type === "board_snapshot") receivedSnapshot = true;
         handleBoardEvent(message, boardId, actions, selectedIssue, moves);
       };
       nextSocket.onerror = () => {
@@ -107,22 +109,27 @@ export function useBoardRealtime(state: DashboardState) {
       };
       nextSocket.onclose = reconnect;
     };
+    // Presence must not wait for the REST fallback to finish loading.
+    void connect();
     void Promise.all([
-      api<{ sections: Section[] }>(`/v1/sections?boardId=${boardId}`),
-      api<{ issues: Issue[] }>(`/v1/issues?boardId=${boardId}`),
+      api<{ sections: Section[] }>(`/v1/sections?boardId=${boardId}`, {
+        signal: controller.signal,
+      }),
+      api<{ issues: Issue[] }>(`/v1/issues?boardId=${boardId}`, {
+        signal: controller.signal,
+      }),
     ])
       .then(([sections, issues]) => {
-        if (!active) return;
+        if (!active || receivedSnapshot) return;
         setSections(sections.sections ?? []);
         setIssues(issues.issues ?? []);
       })
       .catch((cause) => {
-        if (active) setError(messageOf(cause));
+        if (active && !receivedSnapshot) setError(messageOf(cause));
       })
       .finally(() => {
         if (!active) return;
         setLoadingBoard(false);
-        void connect();
       });
     return () => {
       active = false;

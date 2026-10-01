@@ -47,6 +47,8 @@ The frontend, backend, and WebSocket service must use the same `FRONTEND_ORIGIN`
 
 Configure a liveness probe for `GET /healthz` and a readiness probe for `GET /readyz`. Readiness returns 200 when the HTTP service is running and its PostgreSQL notification listener is connected; it returns 503 while starting, reconnecting, or shutting down. On SIGINT/SIGTERM the process closes WebSocket connections and disconnects Prisma.
 
+The HTTP listener starts even when PostgreSQL is temporarily unavailable. During that time liveness remains healthy, readiness and WebSocket upgrades return 503, and the service retries the PostgreSQL notification connection in the background. Browser clients reconnect automatically after the database becomes reachable.
+
 ## Runtime flow and message details
 
 See [DATA_FLOW.md](./DATA_FLOW.md) for connection authorization, snapshots, event delivery, move handling, message shapes, and operational behavior. For the frontend connection/reconnect behavior, see [the frontend realtime notes](../frontend/README.md#realtime-updates). For the shared API contract, see [the backend API guide](../backend/API.md#board-websocket).

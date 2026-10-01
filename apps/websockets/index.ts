@@ -79,6 +79,7 @@ export async function startRealtimeServer(options: { port?: number } = {}) {
   });
   const wss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024 });
   let listener: Client | undefined;
+  let listenerFailureLogged = false;
   let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   let stopping = false;
 
@@ -146,6 +147,10 @@ export async function startRealtimeServer(options: { port?: number } = {}) {
         return;
       }
       listener = client;
+      if (listenerFailureLogged) {
+        console.log("PostgreSQL notification listener reconnected");
+        listenerFailureLogged = false;
+      }
       client.on("notification", (notification) => {
         if (
           notification.channel !== ISSUE_EVENTS_CHANNEL ||
@@ -187,17 +192,26 @@ export async function startRealtimeServer(options: { port?: number } = {}) {
         broadcastToUser(userId, { type: "invitation_changed", userId });
     } catch (error) {
       await client.end().catch(() => {});
+      if (!listenerFailureLogged) {
+        console.error(
+          "PostgreSQL notification listener connection failed",
+          error,
+        );
+        listenerFailureLogged = true;
+      }
       if (!stopping)
         reconnectTimer = setTimeout(() => {
           void connectListener();
         }, 1000);
-      if (!listener && !server.listening) throw error;
     }
   }
-  await connectListener();
 
   server.on("upgrade", async (req, socket, head) => {
     try {
+      if (!listener) {
+        reject(socket, 503);
+        return;
+      }
       const pathname = new URL(req.url ?? "", "http://localhost").pathname;
       const boardId = /^\/boards\/([^/]+)$/.exec(pathname)?.[1];
       const isUserRoom = pathname === "/users/me";
@@ -404,6 +418,7 @@ export async function startRealtimeServer(options: { port?: number } = {}) {
   }
   const address = server.address();
   const port = typeof address === "object" && address ? address.port : 0;
+  void connectListener();
   return {
     port,
     close: async () => {
