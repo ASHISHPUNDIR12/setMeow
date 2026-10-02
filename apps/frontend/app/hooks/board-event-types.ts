@@ -1,21 +1,23 @@
 import type { MutableRefObject } from "react";
-import type { DashboardState } from "./use-dashboard-state";
+import type { WorkspaceState } from "./use-workspace-state";
 import type { Issue } from "../lib/types";
 
 export type PendingMove = {
   issueId: string;
-  previousSectionId: string;
-  timer: number;
+  targetSectionId: string;
+  confirmedSectionId: string;
+  completion: Promise<void>;
+  controller: AbortController;
 };
 export type BoardEventActions = Pick<
-  DashboardState,
+  WorkspaceState,
   | "setLoadingBoard"
   | "setSections"
   | "setIssues"
   | "setActiveUsers"
   | "setIssueComments"
   | "setIssueAssignments"
-  | "setSelectedIssue"
+  | "setSelectedIssueId"
   | "setBoards"
   | "setError"
 >;

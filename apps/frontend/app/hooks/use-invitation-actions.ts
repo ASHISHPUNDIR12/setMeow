@@ -1,31 +1,32 @@
 "use client";
 
-import type { FormEvent } from "react";
 import { api } from "../lib/api";
-import type { DashboardState } from "./use-dashboard-state";
-import { messageOf } from "./errors";
+import type { WorkspaceState } from "./use-workspace-state";
+import { messageOf } from "../lib/errors";
+import { usePendingActions } from "./use-pending-actions";
 
 export function useInvitationActions(
-  state: DashboardState,
+  state: WorkspaceState,
   refreshAccount: () => Promise<void>,
   announce: (message: string) => void,
   chooseOrganization: (id: string) => void,
 ) {
-  async function sendInvite(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const { pending, run } = usePendingActions();
+  async function sendInvite(email: string) {
     try {
       await api("/v1/invite", {
         method: "POST",
         body: JSON.stringify({
-          email: state.inviteEmail.trim(),
+          email: email.trim(),
           orgId: state.organizationId,
         }),
       });
-      state.setInviteEmail("");
       state.setShowInvite(false);
       announce("Invitation sent");
+      return true;
     } catch (cause) {
       state.setError(messageOf(cause));
+      return false;
     }
   }
 
@@ -46,5 +47,11 @@ export function useInvitationActions(
     }
   }
 
-  return { sendInvite, answerInvite };
+  return {
+    sendingInvite: pending.has("send"),
+    answeringInvites: pending,
+    sendInvite: (email: string) => run("send", () => sendInvite(email)),
+    answerInvite: (id: string, answer: "accept" | "decline") =>
+      run(id, () => answerInvite(id, answer), answer),
+  };
 }

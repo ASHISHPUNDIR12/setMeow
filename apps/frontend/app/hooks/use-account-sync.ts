@@ -1,49 +1,46 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { api } from "../lib/api";
-import { openRealtimeSocket } from "../lib/realtime";
-import type {
-  OrganizationMembership,
-  Invitation,
-  SocketMessage,
-} from "../lib/types";
-import type { DashboardState } from "./use-dashboard-state";
-import { messageOf } from "./errors";
+import { openRealtimeSocket, parseRealtimeMessage } from "../lib/realtime";
+import type { OrganizationMembership, Invitation } from "../lib/types";
+import type { WorkspaceState } from "./use-workspace-state";
+import { messageOf } from "../lib/errors";
 
-export function useAccountSync(state: DashboardState) {
-  const { setMemberships, setInvitations, setSignedIn, setError } = state;
+export function useAccountSync(state: WorkspaceState) {
+  const { signedIn, setMemberships, setInvitations, setError } = state;
+  const lifecycle = useRef<AbortController | null>(null);
+  const latestRefresh = useRef(0);
   const refreshAccount = useCallback(async () => {
+    const signal = lifecycle.current?.signal;
+    if (!signal || signal.aborted) return;
+    const refreshId = ++latestRefresh.current;
     const [organizations, inbox] = await Promise.all([
-      api<{ allOrganization: OrganizationMembership[] }>("/v1/organizations"),
-      api<{ invitations: Invitation[] }>("/v1/invites"),
+      api<{ allOrganization: OrganizationMembership[] }>("/v1/organizations", {
+        signal,
+      }),
+      api<{ invitations: Invitation[] }>("/v1/invites", { signal }),
     ]);
+    // Ignore responses from an earlier refresh or a workspace that unmounted.
+    if (signal.aborted || refreshId !== latestRefresh.current) return;
     const memberships = organizations.allOrganization ?? [];
     setMemberships(memberships);
     setInvitations(inbox.invitations ?? []);
-    setSignedIn(true);
-  }, [setMemberships, setInvitations, setSignedIn]);
+  }, [setMemberships, setInvitations]);
 
   useEffect(() => {
-    let active = true;
-    void Promise.resolve()
-      .then(refreshAccount)
-      .catch((cause) => {
-        if (!active) return;
-        setError(messageOf(cause));
-      });
-    return () => {
-      active = false;
-    };
-  }, [refreshAccount, setSignedIn, setError]);
-
-  useEffect(() => {
-    if (!state.signedIn) return;
+    if (!signedIn) return;
     let active = true;
     let socket: WebSocket | undefined;
     let timer = 0;
     let attempts = 0;
     const controller = new AbortController();
+    lifecycle.current = controller;
+    const refresh = () => {
+      void refreshAccount().catch((cause) => {
+        if (active) setError(messageOf(cause));
+      });
+    };
     const reconnect = () => {
       if (!active) return;
       attempts += 1;
@@ -66,32 +63,29 @@ export function useAccountSync(state: DashboardState) {
       }
       socket.onopen = () => {
         attempts = 0;
-        void refreshAccount().catch((cause) => {
-          if (active) setError(messageOf(cause));
-        });
+        refresh();
       };
       socket.onmessage = (event) => {
-        let message: SocketMessage;
-        try {
-          message = JSON.parse(String(event.data));
-        } catch {
-          return;
-        }
-        if (message.type === "invitation_changed")
-          void refreshAccount().catch((cause) => {
-            if (active) setError(messageOf(cause));
-          });
+        if (!active) return;
+        const message = parseRealtimeMessage(String(event.data));
+        if (!message) return;
+        if (message.type === "invitation_changed") refresh();
       };
       socket.onclose = reconnect;
     };
-    void connect();
+    // Defer startup so Strict Mode can discard its first effect without requests.
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      refresh();
+      void connect();
+    });
     return () => {
       active = false;
       controller.abort();
       window.clearTimeout(timer);
       socket?.close();
     };
-  }, [state.signedIn, refreshAccount, setError]);
+  }, [signedIn, refreshAccount, setError]);
 
   return refreshAccount;
 }

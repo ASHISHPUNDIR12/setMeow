@@ -1,9 +1,10 @@
 import "server-only";
 
 import { cache } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import type { Board, OrganizationMembership, Person } from "./types";
+import { safeReturnTo } from "./routes";
 
 const backendUrl = (
   process.env.API_URL ??
@@ -43,8 +44,15 @@ export const getAccount = cache(async () => {
 });
 
 export async function requireAccount(returnTo = "/dashboard") {
+  // Layouts persist on navigation. Private data reads also verify the session;
+  // getAccount's request-scoped cache shares the lookup with the layout.
   const account = await getAccount();
-  if (!account) redirect(`/signin?next=${encodeURIComponent(returnTo)}`);
+  if (!account) {
+    const requestUrl = (await headers()).get("x-auth-request-url");
+    redirect(
+      `/signin?next=${encodeURIComponent(safeReturnTo(requestUrl ?? returnTo))}`,
+    );
+  }
   return account;
 }
 

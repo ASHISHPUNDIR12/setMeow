@@ -1,156 +1,196 @@
 "use client";
 
+import { type FormEvent, useRef, useState } from "react";
 import { buttonStyles, formStyles } from "../lib/ui-styles";
 
-import { Avatar, Modal } from "./ui";
-import type { IssueDialogProps } from "./workspace-dialog-types";
+import { ActionSpinner } from "./ui";
+import { Modal } from "./modal";
+import { IssueAssignees } from "./issue-assignees";
+import { IssueComments } from "./issue-comments";
+
+import type { Assignment, Comment, Issue, Person } from "../lib/types";
+
+type IssueDialogProps = {
+  loadingDetails: boolean;
+  selectedIssue: Issue | null;
+  onCloseIssue: () => void;
+  onSaveIssue: (values: {
+    title: string;
+    description: string;
+  }) => Promise<void>;
+  error: string;
+  onDeleteIssue: (issue: Issue) => Promise<void>;
+  onAssignUser: (userId: string) => Promise<void>;
+  organizationPeople: Person[];
+  issueAssignments: Assignment[];
+  onRemoveAssignment: (userId: string) => Promise<void>;
+  issueComments: Comment[];
+  onAddComment: (content: string) => Promise<boolean>;
+};
 
 export function IssueDialog(props: IssueDialogProps) {
   const issue = props.selectedIssue;
+  const [title, setTitle] = useState(issue?.title ?? "");
+  const [description, setDescription] = useState(issue?.description ?? "");
+  const [comment, setComment] = useState("");
+  const [editingDescription, setEditingDescription] = useState(
+    !issue?.description,
+  );
+  const [pendingAction, setPendingAction] = useState<
+    "save" | "comment" | "delete" | "assign" | "remove" | null
+  >(null);
+  const [pendingMemberId, setPendingMemberId] = useState("");
+  const submitting = useRef(false);
+  const busy = pendingAction !== null;
   if (!issue) return null;
 
-  const unassignedPeople = props.organizationPeople.filter(
-    (person) =>
-      !props.issueAssignments.some(
-        (assignment) => assignment.userId === person.id,
-      ),
-  );
+  async function runAction(
+    action: "save" | "comment" | "delete" | "assign" | "remove",
+    submit: () => Promise<void>,
+  ) {
+    if (submitting.current) return;
+    submitting.current = true;
+    setPendingAction(action);
+    try {
+      await submit();
+    } finally {
+      submitting.current = false;
+      setPendingAction(null);
+    }
+  }
+
+  function saveIssue(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void runAction("save", () => props.onSaveIssue({ title, description }));
+  }
+
+  function addComment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!comment.trim()) return;
+    void runAction("comment", async () => {
+      if (await props.onAddComment(comment)) setComment("");
+    });
+  }
 
   return (
-    <Modal title="Issue details" close={props.onCloseIssue}>
+    <Modal
+      title="Issue details"
+      close={() => {
+        if (!submitting.current) props.onCloseIssue();
+      }}
+      closeDisabled={busy}
+    >
       <div className="pt-4">
-        <form className="flex flex-col gap-3.5" onSubmit={props.onSaveIssue}>
+        {props.error && (
+          <p
+            role="alert"
+            className="mb-4 rounded-xl border border-[#efd6ca] bg-[#faeee9] p-3 text-xs text-[#9a4e3c] dark:border-[#69463d] dark:bg-[#4a302a] dark:text-[#edb5a5]"
+          >
+            {props.error}
+          </p>
+        )}
+        <form
+          className="flex flex-col gap-3.5"
+          onSubmit={saveIssue}
+          aria-busy={pendingAction === "save"}
+        >
           <label className={formStyles.label}>
             Title
             <input
               className={formStyles.input}
               autoFocus
               required
+              disabled={busy}
               maxLength={100}
-              value={props.editTitle}
-              onChange={(event) => props.onEditTitleChange(event.target.value)}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
             />
           </label>
-          <label className={formStyles.label}>
-            Description
-            <textarea
-              className={formStyles.textarea}
-              rows={4}
-              value={props.editDescription}
-              onChange={(event) =>
-                props.onEditDescriptionChange(event.target.value)
-              }
-              placeholder="Add a little more context…"
-            />
-          </label>
-          <div className="mt-1.5 flex flex-wrap justify-end gap-2">
-            <button
-              type="button"
-              className={buttonStyles.danger}
-              onClick={() => props.onDeleteIssue(issue)}
-            >
-              Delete issue
-            </button>
-            <button className={buttonStyles.primary}>Save changes</button>
-          </div>
-        </form>
-        <div className="my-5 h-px bg-line" />
-        <div>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="flex items-center gap-2 text-xs font-semibold text-[#5b574a] dark:text-[#e1dac8]">
-              People
-            </h3>
-            <select
-              className="min-w-0 max-w-full rounded-lg border-0 bg-[#f4f0e2] p-2 text-[10px] text-[#7b704e] dark:bg-[#39352b] dark:text-[#d4cbb8]"
-              aria-label="Assign a member"
-              value=""
-              onChange={(event) => props.onAssignUser(event.target.value)}
-            >
-              <option value="">＋ Assign</option>
-              {unassignedPeople.map((person) => (
-                <option key={person.id} value={person.id}>
-                  {person.username}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {props.issueAssignments.length ? (
-              props.issueAssignments.map((assignment) => (
-                <span
-                  className="flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-line bg-[#fbf9f0] py-1 pr-2 pl-0.5 text-[10px] text-[#716b5b] dark:bg-[#39352b] dark:text-[#d4cbb8]"
-                  key={assignment.userId}
-                >
-                  <Avatar name={assignment.user.username} small />
-                  <span className="min-w-0 truncate">
-                    {assignment.user.username}
-                  </span>
-                  <button
-                    className="size-4 shrink-0 max-sm:size-8 cursor-pointer rounded-full border-0 bg-[#eeeadd] leading-none text-[#8b8474] dark:bg-[#494333] dark:text-[#d4cbb8]"
-                    onClick={() => props.onRemoveAssignment(assignment.userId)}
-                    aria-label={`Remove ${assignment.user.username}`}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <label
+                className="text-[11px] font-bold text-[#5f5a4c] dark:text-[#d2cbb9]"
+                htmlFor={editingDescription ? "issue-description" : undefined}
+              >
+                Description
+              </label>
+              <button
+                type="button"
+                className={`${buttonStyles.soft} min-h-8! px-2.5! text-[10px]! disabled:cursor-wait disabled:opacity-60`}
+                disabled={busy}
+                onClick={() => {
+                  if (editingDescription) setDescription(issue.description);
+                  setEditingDescription(!editingDescription);
+                }}
+              >
+                {editingDescription ? "Cancel editing" : "Edit description"}
+              </button>
+            </div>
+            {editingDescription ? (
+              <textarea
+                id="issue-description"
+                className={formStyles.textarea}
+                rows={4}
+                disabled={busy}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Add a little more context…"
+              />
             ) : (
-              <span className="text-muted text-xs">No one assigned yet.</span>
-            )}
-          </div>
-        </div>
-        <div className="my-5 h-px bg-line" />
-        <div>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="flex items-center gap-2 text-xs font-semibold text-[#5b574a] dark:text-[#e1dac8]">
-              Conversation{" "}
-              <span className="inline-grid h-5 min-w-5 place-items-center rounded-lg bg-white/60 px-1 text-[9px] font-bold text-[#938d7d] dark:bg-[#403b30] dark:text-[#c2baa8]">
-                {props.issueComments.length}
-              </span>
-            </h3>
-          </div>
-          <div className="flex max-h-45 flex-col gap-3 overflow-y-auto">
-            {props.issueComments.map((comment) => (
-              <article className="flex items-start gap-2" key={comment.id}>
-                <Avatar name={comment.user.username} small />
-                <div className="min-w-0">
-                  <strong className="text-[10px] [overflow-wrap:anywhere] text-[#615c4f] dark:text-[#d4cbb8]">
-                    {comment.user.username}
-                  </strong>
-                  <p className="mt-1 text-[11px] leading-relaxed text-[#7e796c] [overflow-wrap:anywhere] dark:text-muted">
-                    {comment.content}
-                  </p>
-                </div>
-              </article>
-            ))}
-            {props.issueComments.length === 0 && (
-              <p className="text-muted text-xs">
-                No comments yet. Start the conversation.
+              <p className="rounded-xl border border-line bg-input p-3 text-xs leading-relaxed whitespace-pre-wrap text-ink [overflow-wrap:anywhere]">
+                {issue.description || "No description yet."}
               </p>
             )}
           </div>
-          <form
-            className="mt-3.5 flex items-end gap-2"
-            onSubmit={props.onAddComment}
-          >
-            <textarea
-              className="min-w-0 flex-1 resize-y rounded-xl border border-line bg-input p-2.5 text-[11px]"
-              rows={2}
-              value={props.commentText}
-              onChange={(event) =>
-                props.onCommentTextChange(event.target.value)
-              }
-              placeholder="Write a comment…"
-              aria-label="Write a comment"
-            />
+          <div className="mt-1.5 flex flex-wrap justify-end gap-2">
             <button
-              className={buttonStyles.primary}
-              disabled={!props.commentText.trim()}
+              type="button"
+              className={`${buttonStyles.danger} disabled:cursor-wait disabled:opacity-60`}
+              disabled={busy}
+              onClick={() =>
+                void runAction("delete", () => props.onDeleteIssue(issue))
+              }
             >
-              Send
+              {pendingAction === "delete" && <ActionSpinner />}
+              {pendingAction === "delete" ? "Deleting…" : "Delete issue"}
             </button>
-          </form>
-        </div>
+            <button
+              type="submit"
+              className={`${buttonStyles.primary} disabled:cursor-wait disabled:opacity-60`}
+              disabled={busy || !title.trim()}
+            >
+              {pendingAction === "save" && <ActionSpinner />}
+              {pendingAction === "save" ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        </form>
+        <div className="my-5 h-px bg-line" />
+        <IssueAssignees
+          people={props.organizationPeople}
+          assignments={props.issueAssignments}
+          disabled={busy}
+          assigning={pendingAction === "assign"}
+          loading={props.loadingDetails}
+          removingUserId={pendingAction === "remove" ? pendingMemberId : null}
+          onAssign={(userId) =>
+            void runAction("assign", () => props.onAssignUser(userId))
+          }
+          onRemove={(userId) => {
+            if (submitting.current) return;
+            setPendingMemberId(userId);
+            void runAction("remove", () => props.onRemoveAssignment(userId));
+          }}
+        />
+        <div className="my-5 h-px bg-line" />
+        <IssueComments
+          comments={props.issueComments}
+          comment={comment}
+          disabled={busy || props.loadingDetails}
+          sending={pendingAction === "comment"}
+          loading={props.loadingDetails}
+          onCommentChange={setComment}
+          onSubmit={addComment}
+        />
       </div>
     </Modal>
   );

@@ -4,31 +4,43 @@ The app uses the backend REST API for accounts, workspaces, boards, issues, comm
 
 ## Reading the code
 
-Start with the `page.tsx` files in `app/(auth)` and `app/(app)`. Server pages validate the session before rendering the workspace client component in `app/dashboard.tsx`. Follow `app/components/workspace-screen.tsx` to see how the sidebar, board header, board columns, and dialogs fit together.
+Start with `app/(protected)/layout.tsx`: it verifies the account and initializes `AuthProvider`. Then read `app/(guest)/layout.tsx` and `app/components/auth-provider.tsx`. A board's server `page.tsx` in `app/(protected)/workspaces/[organizationId]/boards/[boardId]` checks resource access before passing workspace data to `WorkspaceApp`. Pages and layouts remain Server Components; the auth context, workspace, and authentication forms are client boundaries because they need state, browser APIs, and live connections.
 
-| Location                                | Responsibility                                                                            |
-| --------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `app/hooks/use-dashboard-controller.ts` | Connects state, data loading, and user actions; derives the selected workspace and board. |
-| `app/hooks/use-dashboard-state.ts`      | Holds session, workspace, dialog, and form state, grouped by purpose.                     |
-| `app/components/`                       | Renders the UI and calls callbacks supplied by the controller.                            |
-| `app/components/workspace-overlays.tsx` | Passes each dialog its specific values and callbacks.                                     |
-| `app/hooks/use-*-actions.ts`            | Handles form submissions and REST writes for each feature.                                |
-| `app/lib/api.ts`                        | Sends authenticated REST requests and translates failed responses into errors.            |
-| `app/lib/types.ts`                      | Defines the frontend data models.                                                         |
-| `app/lib/server-api.ts`                 | Verifies sessions with the backend and checks workspace membership on the server.         |
-| `app/lib/routes.ts`                     | Builds workspace/board URLs and validates post-login destinations.                       |
+| Location                                             | Responsibility                                                                                       |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `app/lib/server-api.ts`                              | Cookie-authenticated server reads, session verification, workspace access.                           |
+| `app/(guest)/layout.tsx`, `app/(protected)/layout.tsx` | Shared guest redirects and authenticated layout. |
+| `app/components/auth-provider.tsx` | Current user context, derived signed-in state, and sign-out. |
+| `proxy.ts` | Forwards the requested URL to server layouts to preserve auth return destinations. |
+| `app/components/workspace-app.tsx`                   | Client entry point; connects the workspace controller to the screen.                                 |
+| `app/hooks/use-workspace-controller.ts`              | Composes hooks and mutation callbacks, navigation, and notifications.                                |
+| `app/hooks/use-workspace-state.ts`                   | Data genuinely shared across the screen and realtime handlers; selected issue derived from its ID.   |
+| `app/components/workspace-screen.tsx`                | Sidebar, header, board, invitations, and overlay composition.                                        |
+| `app/components/issue-dialog.tsx`                    | Local issue drafts and submit feedback; delegates people and conversation rendering.                 |
+| `app/components/modal.tsx`                           | Focus management, keyboard dismissal, scroll locking, and accessible dialog title.                   |
+| `app/hooks/use-*.ts`                                 | React hooks for fetching, connections, async pending state, theme, and workspace/invitation actions. |
+| `app/lib/issue-actions.ts`, `issue-collaboration.ts` | Plain async mutations receiving explicit form values; no React hooks.                                |
+| `app/lib/api.ts`                                     | Browser REST calls through `/api`, HTTP error status, and expired-session redirects.                 |
+| `app/lib/board-events.ts`, `realtime.ts`             | Incoming board events, message parsing, socket tickets, and socket creation.                         |
+| `app/lib/types.ts`, `routes.ts`, `errors.ts`         | Domain models, safe route builders, and error messages.                                              |
+
+Component props live beside the component that owns them. Form drafts live in their dialogs; cancelling retains the draft, successful creation clears it, and reopening an issue starts from its saved data. Comments, assignments, and presence remain shared because sockets also update them.
 
 ### Following a user action
 
-For board selection, the sidebar uses Next.js `Link` to navigate to the board URL. The server page verifies membership and board access, then initializes a fresh workspace controller for that route. `use-board-realtime.ts` fetches the initial sections and issues and opens the board’s WebSocket connection. Refreshing a page or using browser history keeps the board selected by the URL.
+A board link navigates to its server page, which verifies membership and board access. The client initializes a workspace for that route. `use-board-realtime.ts` loads a REST fallback alongside the board socket and cancels both when leaving the board.
 
-For issue editing, `openIssue` fills the form state. `issue-dialog.tsx` renders that state and calls `saveIssue` from `use-issue-actions.ts` on submit. The action saves through the REST API and updates local state.
+For editing, `openIssue` stores only an issue ID. `IssueDialog` initializes its own title, description, and comment draft. Saving passes `{ title, description }` to the mutation; the board updates and the modal closes on success. A failure preserves the draft and displays the error. The assignees and conversation have separate, small UI components.
 
 ### Realtime updates
 
-`use-board-realtime.ts` owns connection setup, reconnects, and cleanup. Incoming messages go through `board-event-handler.ts` to `board-content-events.ts` for board content or `board-activity-events.ts` for comments, assignments, and moves.
+`use-board-realtime.ts` owns connection setup and cleanup. `realtime.ts` parses incoming JSON before `board-events.ts` applies board content, comments, assignments, and move events. Async refreshes share the connection's abort signal, so an unmounted board cannot receive a late refresh.
 
-`use-issue-mover.ts` moves a card immediately and waits for server confirmation. It uses the WebSocket when connected and falls back to REST otherwise. Failed moves restore the previous section; socket moves also have a confirmation timeout.
+`app/lib/issue-mover.ts` moves a card immediately and shows “Saving…” until the HTTP endpoint confirms it. WebSockets deliver committed moves to other viewers. Rapid moves of the same issue save sequentially while preserving the newest destination. Network/server failures retry once; unresolved saves read the stored issue before restoring it or reporting failure.
+
+Account refreshes use their own lifecycle signal and ignore superseded responses. Notice timers are cancelled before showing a new notice and when unmounting.
+
+See [REFACTOR.md](./REFACTOR.md) for the feature-by-feature changes, rationale, and patterns to learn.
 
 ### Styles
 
@@ -84,10 +96,10 @@ The default Next.js server listens on port `3000`; set the platform's `PORT` val
 
 Set these variables in the frontend deployment environment before building, since the backend rewrite and browser WebSocket URL are included in the production build:
 
-| Variable | Example | Purpose |
-| --- | --- | --- |
-| `API_URL` | `https://api.example.com` | Backend origin reachable from the Next.js server for the `/api/*` rewrite and server-side session checks. An internal service URL is suitable. Do not include a trailing slash. |
-| `NEXT_PUBLIC_WS_URL` | `wss://setmeow-sockets.onrender.com` | Browser WebSocket origin/base path. The app appends `/boards/{boardId}` or `/users/me` and authenticates using a scoped ticket. A separate hostname is supported. |
+| Variable             | Example                              | Purpose                                                                                                                                                                         |
+| -------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `API_URL`            | `https://api.example.com`            | Backend origin reachable from the Next.js server for the `/api/*` rewrite and server-side session checks. An internal service URL is suitable. Do not include a trailing slash. |
+| `NEXT_PUBLIC_WS_URL` | `wss://setmeow-sockets.onrender.com` | Browser WebSocket origin/base path. The app appends `/boards/{boardId}` or `/users/me` and authenticates using a scoped ticket. A separate hostname is supported.               |
 
 The sample `.env.example` contains local development values; replace them with the production origins in your hosting provider's build environment. `NEXT_PUBLIC_API_URL` is supported as a legacy fallback when `API_URL` is unset, but new deployments should use `API_URL`. Never put backend secrets, database credentials, or JWT signing keys in frontend variables.
 
@@ -99,15 +111,25 @@ Sign in or create an account, create a workspace, then create a board. New board
 
 ## Routes and protection
 
-| URL | Behavior |
-| --- | --- |
-| `/` | Redirects to sign-in or the dashboard according to the verified session. |
-| `/signin`, `/signup` | Separate public auth pages; authenticated users are redirected into the app. |
-| `/dashboard` | Protected entry point; opens the first workspace or shows workspace creation. |
-| `/workspaces/[organizationId]` | Protected workspace; opens its first board or shows board creation. |
-| `/workspaces/[organizationId]/boards/[boardId]` | Protected, shareable board URL with membership and board checks. |
-| `/invitations` | Protected invitation inbox. |
+| URL                                             | Behavior                                                                      |
+| ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| `/`                                             | Redirects to sign-in or the dashboard according to the verified session.      |
+| `/signin`, `/signup`                            | Separate public auth pages; authenticated users are redirected into the app.  |
+| `/dashboard`                                    | Protected entry point; opens the first workspace or shows workspace creation. |
+| `/workspaces/[organizationId]`                  | Protected workspace; opens its first board or shows board creation.           |
+| `/workspaces/[organizationId]/boards/[boardId]` | Protected, shareable board URL with membership and board checks.              |
+| `/invitations`                                  | Protected invitation inbox.                                                   |
 
-Every protected server page calls the shared authorization helpers. Session verification uses the backend’s JWT validation, not just cookie presence, and account requests are never cached across users. The backend remains responsible for authorizing every REST and WebSocket operation. Invalid sessions redirect to `/signin?next=...`; successful authentication returns to the requested app route. Missing or inaccessible workspaces and boards show the not-found page. Backend failures show a retryable error page.
+The `(guest)` group contains sign-in and signup; its layout redirects verified users to a safe `next` destination or the dashboard. The `(protected)` group contains dashboard, invitations, workspaces, and boards; its layout verifies the account before initializing the client auth context. Route groups do not change public URLs.
+
+The authentication flow is: the backend sets an HttpOnly cookie after sign-in; the protected server layout calls `requireAccount()`; `getAccount()` forwards that cookie to `/auth/me`; the verified user becomes `AuthProvider`'s initial state. Client components read `{ user, signedIn, signOut }` with `useAuth()`. There is no browser mount-time `/auth/me` fetch. Sign-out clears the context only after the backend succeeds, then navigates to sign-in. UI pending/error state stays with the caller.
+
+Server Components cannot read client context. Pages loading private data still call the shared authorization helpers because layouts persist on navigation and do not protect data reads by themselves. React's `cache()` shares the account lookup within a server render, not across users or sessions. Organization memberships and board state remain owned by the workspace feature. The backend authorizes every REST and WebSocket operation; browser API calls redirect on expired sessions.
+
+Server layouts do not receive `searchParams`. `proxy.ts` forwards the pathname and query in an overwritten request header so guest redirects and protected login redirects preserve the destination. It performs no authentication and does not run for `/api` or static assets. `safeReturnTo()` allows only app destinations. Missing or inaccessible workspaces and boards show the not-found page. Backend failures show a retryable error page.
 
 Run `bun run lint`, `bunx tsc --noEmit`, and `bun run build` for static checks. After building, run `node --test tests/routing.test.mjs` for HTTP route-protection tests against an isolated mock backend. These tests verify routing and authorization handling, not database or WebSocket integration.
+
+## Verification
+
+Run `bun run test`, `bun run lint`, and `bun run check-types` for the component, mutation, realtime, and static checks. After `bun run build`, run `bun run test:routes` to test authorization and navigation against an isolated mock backend. Route tests need permission to listen on local ports. These checks do not replace a browser check of drag-and-drop, keyboard focus, and multi-user collaboration against the actual services.

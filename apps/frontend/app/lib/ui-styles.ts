@@ -1,6 +1,6 @@
 // Shared Tailwind utilities for controls used across authentication and dialogs.
 const buttonBase =
-  "inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-4 text-xs font-bold transition duration-150 enabled:hover:-translate-y-px motion-reduce:transform-none motion-reduce:transition-none";
+  "inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border-0 px-4 text-xs font-bold transition duration-150 enabled:hover:-translate-y-px disabled:cursor-wait disabled:opacity-60 motion-reduce:transform-none motion-reduce:transition-none";
 
 export const buttonStyles = {
   primary: `${buttonBase} bg-linear-to-br from-[#f4d65f] to-[#eec443] text-[#423a21] shadow-sm hover:from-[#f6d95f] hover:to-[#f6d95f] [&_span]:text-[15px]`,

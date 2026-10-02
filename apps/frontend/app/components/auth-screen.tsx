@@ -97,6 +97,7 @@ export function AuthScreen(props: AuthScreenProps) {
         <form
           className="flex flex-col gap-4 mt-6 short:mt-4 short:gap-2.5"
           onSubmit={onSubmit}
+          aria-busy={busy}
         >
           {mode === "signup" && (
             <label className={formStyles.label}>
@@ -107,6 +108,7 @@ export function AuthScreen(props: AuthScreenProps) {
                 required
                 maxLength={80}
                 value={username}
+                disabled={busy}
                 onChange={(event) => onUsernameChange(event.target.value)}
                 placeholder="Alex Morgan"
               />
@@ -120,6 +122,7 @@ export function AuthScreen(props: AuthScreenProps) {
               type="email"
               required
               value={email}
+              disabled={busy}
               onChange={(event) => onEmailChange(event.target.value)}
               placeholder="you@company.com"
             />
@@ -135,6 +138,7 @@ export function AuthScreen(props: AuthScreenProps) {
               minLength={mode === "signup" ? 8 : undefined}
               required
               value={password}
+              disabled={busy}
               onChange={(event) => onPasswordChange(event.target.value)}
               placeholder={
                 mode === "signup" ? "At least 8 characters" : "Your password"

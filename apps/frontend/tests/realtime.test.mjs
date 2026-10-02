@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, spyOn, test } from "bun:test";
 import { openRealtimeSocket } from "../app/lib/realtime";
-import { WEBSOCKET_URL } from "../app/lib/api";
+import { parseRealtimeMessage, WEBSOCKET_URL } from "../app/lib/realtime";
 
 const originalFetch = globalThis.fetch;
 const originalWebSocket = globalThis.WebSocket;
@@ -68,9 +68,14 @@ test("a stalled ticket request times out and a retry can request a fresh ticket"
   timeoutSpy = spyOn(AbortSignal, "timeout").mockReturnValue(deadline.signal);
   globalThis.fetch = async (_input, { signal }) =>
     new Promise((_resolve, reject) => {
-      signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+      signal.addEventListener("abort", () => reject(signal.reason), {
+        once: true,
+      });
     });
-  const connection = openRealtimeSocket("/users/me", new AbortController().signal);
+  const connection = openRealtimeSocket(
+    "/users/me",
+    new AbortController().signal,
+  );
   await Promise.resolve();
   expect(timeoutSpy).toHaveBeenCalledWith(10_000);
   deadline.abort(new DOMException("Ticket request timed out", "TimeoutError"));
@@ -114,4 +119,14 @@ test("each reconnect requests a fresh ticket", async () => {
   expect(attempts).toBe(2);
   expect(new URL(urls[0]).searchParams.get("ticket")).toBe("ticket-1");
   expect(new URL(urls[1]).searchParams.get("ticket")).toBe("ticket-2");
+});
+
+test("malformed realtime payloads are ignored before reaching state handlers", () => {
+  for (const raw of ["null", "[]", "1", "{", "{}", '{"type":42}']) {
+    expect(parseRealtimeMessage(raw)).toBeNull();
+  }
+  expect(parseRealtimeMessage('{"type":"presence","activeUsers":[]}')).toEqual({
+    type: "presence",
+    activeUsers: [],
+  });
 });

@@ -8,6 +8,7 @@ import { Avatar, ThemeToggle } from "./ui";
 type BoardHeaderProps = {
   organizationName: string;
   boardTitle: string;
+  canCreateIssue: boolean;
   connection: "offline" | "connecting" | "live";
   activeUsers: Person[];
   isAdmin: boolean;
@@ -110,7 +111,7 @@ export function BoardHeader(props: BoardHeaderProps) {
           <button
             className={`${buttonStyles.primary} max-sm:min-h-11! max-sm:whitespace-nowrap!`}
             onClick={onNewIssue}
-            disabled={!boardTitle}
+            disabled={!props.canCreateIssue}
           >
             <span>＋</span> New issue
           </button>
