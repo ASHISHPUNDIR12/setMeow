@@ -2,12 +2,21 @@
 
 import Link from "next/link";
 import { buttonStyles } from "../lib/ui-styles";
-import type { InvitationInboxProps } from "./workspace-dialog-types";
+
+import { ActionSpinner } from "./ui";
+
+import type { Invitation } from "../lib/types";
+
+type InvitationInboxProps = {
+  answeringInvites: Map<string, string>;
+  invitations: Invitation[];
+  onAnswerInvite: (id: string, answer: "accept" | "decline") => void;
+};
 
 export function InvitationInbox(props: InvitationInboxProps) {
   return (
     <div className="my-8 rounded-3xl border border-line bg-surface p-6 max-sm:p-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-center  justify-between gap-4">
         <div className="min-w-0 [overflow-wrap:anywhere]">
           <p className="mb-2 text-[10px] font-extrabold tracking-[0.15em] text-[#9b895a] uppercase">
             YOUR INBOX
@@ -16,7 +25,11 @@ export function InvitationInbox(props: InvitationInboxProps) {
             Workspace invitations
           </h2>
         </div>
-        <Link href="/dashboard" className="text-xs underline">
+        <Link
+          href="/dashboard"
+          className={`${buttonStyles.primary} min-h-11! shrink-0 no-underline max-sm:w-full mt-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#9b7b25] dark:focus-visible:outline-[#e4be55]`}
+        >
+          <span aria-hidden="true">←</span>
           Back to dashboard
         </Link>
       </div>
@@ -37,14 +50,28 @@ export function InvitationInbox(props: InvitationInboxProps) {
             <button
               className={`${buttonStyles.soft} min-h-8! px-2.5! text-[10px]! max-sm:min-h-11! max-sm:flex-1`}
               onClick={() => props.onAnswerInvite(invite.id, "decline")}
+              disabled={props.answeringInvites.has(invite.id)}
             >
-              Decline
+              {props.answeringInvites.get(invite.id) === "decline" ? (
+                <>
+                  <ActionSpinner /> Declining…
+                </>
+              ) : (
+                "Decline"
+              )}
             </button>
             <button
               className={`${buttonStyles.primary} min-h-8! px-2.5! text-[10px]! max-sm:min-h-11! max-sm:flex-1`}
               onClick={() => props.onAnswerInvite(invite.id, "accept")}
+              disabled={props.answeringInvites.has(invite.id)}
             >
-              Join{" "}
+              {props.answeringInvites.get(invite.id) === "accept" ? (
+                <>
+                  <ActionSpinner /> Joining…
+                </>
+              ) : (
+                "Join"
+              )}{" "}
               <span className="text-[10px] [overflow-wrap:anywhere] text-[#928c7c]">
                 ↗
               </span>

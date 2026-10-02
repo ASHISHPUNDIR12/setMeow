@@ -5,19 +5,21 @@ import { BoardContent } from "./board-content";
 import { BoardHeader } from "./board-header";
 import { WorkspaceSidebar } from "./workspace-sidebar";
 import { WorkspaceOverlays } from "./workspace-overlays";
-import type { DashboardController } from "../hooks/use-dashboard-controller";
+import type { WorkspaceController } from "../hooks/use-workspace-controller";
 
 export function WorkspaceScreen({
   app,
   view,
 }: {
-  app: DashboardController;
+  app: WorkspaceController;
   view: "board" | "invitations";
 }) {
   const { state } = app;
+  if (!app.user) return null;
   return (
     <main className="grid min-h-dvh grid-cols-[250px_minmax(0,1fr)] max-lg:grid-cols-[215px_minmax(0,1fr)] max-sm:flex max-sm:flex-col">
       <WorkspaceSidebar
+        signingOut={app.signingOut}
         memberships={state.memberships}
         organizationId={state.organizationId}
         boards={state.boards}
@@ -32,6 +34,7 @@ export function WorkspaceScreen({
       />
       <section className="min-w-0 px-[clamp(22px,4vw,62px)] pb-18 max-lg:px-6 max-sm:px-4 max-sm:pb-10">
         <BoardHeader
+          canCreateIssue={view === "board" && Boolean(app.selectedBoard)}
           organizationName={app.selectedMembership?.organization.name ?? ""}
           boardTitle={
             view === "invitations"
@@ -51,15 +54,18 @@ export function WorkspaceScreen({
         />
         {view === "invitations" ? (
           <InvitationInbox
+            answeringInvites={app.answeringInvites}
             invitations={state.invitations}
             onAnswerInvite={app.answerInvite}
           />
         ) : (
           <BoardContent
+            creatingSection={app.creatingSection}
             hasOrganization={Boolean(state.organizationId)}
             hasBoard={Boolean(app.selectedBoard)}
             loading={state.loadingBoard}
             issues={state.issues}
+            movingIssueIds={state.movingIssueIds}
             sections={state.sections}
             issuesBySection={app.issuesBySection}
             addingSection={state.addingSection}

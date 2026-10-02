@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AuthScreen } from "./auth-screen";
 import { api } from "../lib/api";
 import { useThemePreference } from "../hooks/use-theme-preference";
-import { messageOf } from "../hooks/errors";
+import { messageOf } from "../lib/errors";
 
 export function AuthForm({
   mode,
@@ -22,6 +22,7 @@ export function AuthForm({
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);
   const [message, setMessage] = useState("");
   const oauthMessage =
     oauthError === "cancelled"
@@ -34,6 +35,8 @@ export function AuthForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setBusy(true);
     setMessage("");
     try {
@@ -51,6 +54,7 @@ export function AuthForm({
     } catch (cause) {
       setMessage(messageOf(cause));
       setBusy(false);
+      submitting.current = false;
     }
   }
 

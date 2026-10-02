@@ -8,6 +8,7 @@ let backend;
 let frontend;
 let origin;
 let output = "";
+const accountRequests = [];
 
 async function listen(server) {
   await new Promise((resolve, reject) => {
@@ -19,6 +20,7 @@ async function listen(server) {
 
 before(async () => {
   backend = createServer((request, response) => {
+    if (request.url === "/auth/me") accountRequests.push(request.headers.cookie);
     response.setHeader("Content-Type", "application/json");
     const token = request.headers.cookie;
     if (token === "accessToken=backend-down") {
@@ -34,11 +36,16 @@ before(async () => {
     } else if (request.url === "/v1/organizations") {
       response.end(JSON.stringify({ allOrganization: token === "accessToken=empty" ? [] : [
         { role: "admin", organization: { id: "team", name: "Private team", description: "" } },
+        { role: "member", organization: { id: "second-team", name: "Second team", description: "" } },
       ] }));
     } else if (request.url === "/v1/organization/team/boards") {
       response.end(JSON.stringify({ allBoards: [
         { id: "one", organizationId: "team", title: "First private board" },
         { id: "two", organizationId: "team", title: "Second private board" },
+      ] }));
+    } else if (request.url === "/v1/organization/second-team/boards") {
+      response.end(JSON.stringify({ allBoards: [
+        { id: "three", organizationId: "second-team", title: "Other workspace board" },
       ] }));
     } else {
       response.writeHead(404).end('{}');
@@ -140,9 +147,54 @@ test("a direct board URL preserves selection and denies other resources", async 
 
 test("authenticated auth pages return to safe app URLs only", async () => {
   await assertRedirect(await request("/signin?next=%2Finvitations", "valid"), "/invitations");
+  await assertRedirect(await request("/signup?next=%2Fworkspaces%2Fteam%2Fboards%2Ftwo", "valid"), "/workspaces/team/boards/two");
+  await assertRedirect(await request("/signin?next=%2Finvitations&next=%2Fdashboard", "valid"), "/dashboard");
   for (const target of ["https://example.com", "//example.com", "/signin", "/workspaces\\example.com"]) {
     await assertRedirect(await request(`/signup?next=${encodeURIComponent(target)}`, "valid"), "/dashboard");
   }
+});
+
+test("layouts preserve query parameters and ignore supplied redirect headers", async () => {
+  const path = "/invitations?organizationId=second-team";
+  await assertRedirect(await request(path), `/signin?next=${encodeURIComponent(path)}`);
+  const response = await fetch(`${origin}/signin?next=%2Finvitations`, {
+    redirect: "manual",
+    headers: {
+      Cookie: "accessToken=valid",
+      "x-auth-request-url": "/signin?next=%2Fworkspaces%2Fteam",
+    },
+  });
+  await assertRedirect(response, "/invitations");
+});
+
+test("layout and page share one account lookup and context supplies the user", async () => {
+  accountRequests.length = 0;
+  const response = await request("/invitations", "valid");
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /Test user/);
+  assert.deepEqual(accountRequests, ["accessToken=valid"]);
+});
+
+test("invitations show board navigation for the selected workspace", async () => {
+  const direct = await request("/invitations", "valid");
+  assert.equal(direct.status, 200);
+  const html = await direct.text();
+  assert.match(html, /href="\/workspaces\/team\/boards\/one"/);
+  assert.match(html, /href="\/workspaces\/team\/boards\/two"/);
+  assert.doesNotMatch(html, /No boards yet/);
+
+  const selected = await request("/invitations?organizationId=second-team", "valid");
+  assert.equal(selected.status, 200);
+  const selectedHtml = await selected.text();
+  assert.match(selectedHtml, /href="\/workspaces\/second-team\/boards\/three"/);
+  assert.doesNotMatch(selectedHtml, /href="\/workspaces\/team\/boards\/one"/);
+
+  const unknown = await request("/invitations?organizationId=not-a-member", "valid");
+  assert.equal(unknown.status, 200);
+  assert.match(await unknown.text(), /href="\/workspaces\/team\/boards\/one"/);
+  const empty = await request("/invitations", "empty");
+  assert.equal(empty.status, 200);
+  assert.match(await empty.text(), /No boards yet/);
 });
 
 test("backend outages surface as failures instead of a sign-in redirect", async () => {

@@ -2,21 +2,24 @@
 
 import { useRouter } from "next/navigation";
 import { boardPath, workspacePath } from "../lib/routes";
-import type { FormEvent } from "react";
 import { api } from "../lib/api";
 import type { Board, Organization, Section } from "../lib/types";
-import type { DashboardState } from "./use-dashboard-state";
-import { messageOf } from "./errors";
+import type { WorkspaceState } from "./use-workspace-state";
+import { messageOf } from "../lib/errors";
+import { usePendingActions } from "./use-pending-actions";
 
 export function useWorkspaceActions(
-  state: DashboardState,
+  state: WorkspaceState,
   announce: (message: string) => void,
   refreshAccount: () => Promise<void>,
 ) {
   const router = useRouter();
+  const { pending, run } = usePendingActions();
 
-  async function createOrganization(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function createOrganization(values: {
+    name: string;
+    description: string;
+  }) {
     state.setError("");
     try {
       const { organization } = await api<{ organization: Organization }>(
@@ -24,32 +27,31 @@ export function useWorkspaceActions(
         {
           method: "POST",
           body: JSON.stringify({
-            name: state.newOrgName.trim(),
-            description: state.newOrgDescription.trim(),
+            name: values.name.trim(),
+            description: values.description.trim(),
           }),
         },
       );
-      state.setNewOrgName("");
-      state.setNewOrgDescription("");
       state.setShowCreateOrg(false);
       await refreshAccount();
       router.push(workspacePath(organization.id));
       announce("Organization created");
+      return true;
     } catch (cause) {
       state.setError(messageOf(cause));
+      return false;
     }
   }
 
-  async function createBoard(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!state.organizationId) return;
+  async function createBoard(title: string) {
+    if (!state.organizationId) return false;
     state.setError("");
     try {
       const { board } = await api<{ board: Board }>(
         `/v1/organization/${state.organizationId}/board`,
         {
           method: "POST",
-          body: JSON.stringify({ title: state.newBoardTitle.trim() }),
+          body: JSON.stringify({ title: title.trim() }),
         },
       );
       for (const title of ["Backlog", "In progress", "Done"]) {
@@ -58,36 +60,47 @@ export function useWorkspaceActions(
           body: JSON.stringify({ boardId: board.id, title }),
         });
       }
-      state.setNewBoardTitle("");
       state.setShowCreateBoard(false);
       announce("Board created");
       router.push(boardPath(state.organizationId, board.id));
+      return true;
     } catch (cause) {
       state.setError(
         `${messageOf(cause)} If the board was created, refresh and add its sections before creating issues.`,
       );
+      return false;
     }
   }
 
-  async function createSection(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!state.boardId) return;
-    const form = event.currentTarget;
-    const title = String(new FormData(form).get("title") ?? "").trim();
-    if (!title) return;
+  async function createSection(title: string) {
+    if (!state.boardId || !title.trim()) return false;
     try {
       const { section } = await api<{ section: Section }>("/v1/section", {
         method: "POST",
-        body: JSON.stringify({ boardId: state.boardId, title }),
+        body: JSON.stringify({ boardId: state.boardId, title: title.trim() }),
       });
-      state.setSections((current) => [...current, section]);
-      form.reset();
+      state.setSections((current) =>
+        current.some((item) => item.id === section.id)
+          ? current
+          : [...current, section],
+      );
       state.setAddingSection(false);
       announce("Section added");
+      return true;
     } catch (cause) {
       state.setError(messageOf(cause));
+      return false;
     }
   }
 
-  return { createOrganization, createBoard, createSection };
+  return {
+    creatingOrganization: pending.has("organization"),
+    creatingBoard: pending.has("board"),
+    creatingSection: pending.has("section"),
+    createOrganization: (values: { name: string; description: string }) =>
+      run("organization", () => createOrganization(values)),
+    createBoard: (title: string) => run("board", () => createBoard(title)),
+    createSection: (title: string) =>
+      run("section", () => createSection(title)),
+  };
 }

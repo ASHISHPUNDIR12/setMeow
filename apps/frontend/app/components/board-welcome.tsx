@@ -2,13 +2,14 @@
 
 import { buttonStyles } from "../lib/ui-styles";
 
-import type { FormEvent } from "react";
+import { ActionSpinner } from "./ui";
 
 type BoardWelcomeProps = {
   kind: "organization" | "board" | "section";
+  creatingSection: boolean;
   onCreateOrganization: () => void;
   onCreateBoard: () => void;
-  onCreateSection: (event: FormEvent<HTMLFormElement>) => void;
+  onCreateSection: (title: string) => Promise<boolean | undefined>;
 };
 
 const copy = {
@@ -34,6 +35,7 @@ const copy = {
 
 export function BoardWelcome({
   kind,
+  creatingSection,
   onCreateOrganization,
   onCreateBoard,
   onCreateSection,
@@ -64,7 +66,13 @@ export function BoardWelcome({
       {kind === "section" && (
         <form
           className="flex flex-wrap gap-2 w-full"
-          onSubmit={onCreateSection}
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const title = String(new FormData(form).get("title") ?? "");
+            if (await onCreateSection(title)) form.reset();
+          }}
+          aria-busy={creatingSection}
         >
           <input
             className="min-h-11 min-w-0 basis-36 flex-1 rounded-xl border border-line bg-input px-3 text-xs"
@@ -73,8 +81,12 @@ export function BoardWelcome({
             placeholder="Section name"
             maxLength={50}
             required
+            disabled={creatingSection}
           />
-          <button className={buttonStyles.primary}>Add section</button>
+          <button className={buttonStyles.primary} disabled={creatingSection}>
+            {creatingSection && <ActionSpinner />}
+            {creatingSection ? "Creating…" : "Add section"}
+          </button>
         </form>
       )}
     </div>

@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { api } from "../lib/api";
-import { openRealtimeSocket } from "../lib/realtime";
-import type { Issue, Section, SocketMessage } from "../lib/types";
-import type { DashboardState } from "./use-dashboard-state";
-import { handleBoardEvent } from "./board-event-handler";
+import { openRealtimeSocket, parseRealtimeMessage } from "../lib/realtime";
+import type { Issue, Section } from "../lib/types";
+import type { WorkspaceState } from "./use-workspace-state";
+import { handleBoardEvent, preservePendingMoves } from "../lib/board-events";
 import { type PendingMove } from "./board-event-types";
-import { useIssueMover } from "./use-issue-mover";
-import { messageOf } from "./errors";
+import { createIssueMover } from "../lib/issue-mover";
+import { messageOf } from "../lib/errors";
 
-export function useBoardRealtime(state: DashboardState) {
-  const socket = useRef<WebSocket | null>(null);
+export function useBoardRealtime(state: WorkspaceState) {
   const selectedIssue = useRef<Issue | null>(state.selectedIssue);
   const pendingMoves = useRef(new Map<string, PendingMove>());
   useEffect(() => {
@@ -25,39 +24,27 @@ export function useBoardRealtime(state: DashboardState) {
     setActiveUsers,
     setIssueComments,
     setIssueAssignments,
-    setSelectedIssue,
+    setSelectedIssueId,
     setBoards,
     setError,
   } = state;
-  const actions = useMemo(
-    () => ({
-      setLoadingBoard,
-      setSections,
-      setIssues,
-      setActiveUsers,
-      setIssueComments,
-      setIssueAssignments,
-      setSelectedIssue,
-      setBoards,
-      setError,
-    }),
-    [
-      setLoadingBoard,
-      setSections,
-      setIssues,
-      setActiveUsers,
-      setIssueComments,
-      setIssueAssignments,
-      setSelectedIssue,
-      setBoards,
-      setError,
-    ],
-  );
   const { signedIn, boardId, setConnection } = state;
 
   useEffect(() => {
     if (!signedIn || !boardId) return;
     const moves = pendingMoves.current;
+    let socket: WebSocket | undefined;
+    const actions = {
+      setLoadingBoard,
+      setSections,
+      setIssues,
+      setActiveUsers,
+      setIssueComments,
+      setIssueAssignments,
+      setSelectedIssueId,
+      setBoards,
+      setError,
+    };
     let active = true;
     let reconnectTimer = 0;
     let attempts = 0;
@@ -89,20 +76,24 @@ export function useBoardRealtime(state: DashboardState) {
         nextSocket.close();
         return;
       }
-      socket.current = nextSocket;
+      socket = nextSocket;
       nextSocket.onopen = () => {
         attempts = 0;
         if (active) setConnection("live");
       };
       nextSocket.onmessage = (event) => {
-        let message: SocketMessage;
-        try {
-          message = JSON.parse(String(event.data));
-        } catch {
-          return;
-        }
+        if (!active) return;
+        const message = parseRealtimeMessage(String(event.data));
+        if (!message) return;
         if (message.type === "board_snapshot") receivedSnapshot = true;
-        handleBoardEvent(message, boardId, actions, selectedIssue, moves);
+        handleBoardEvent(
+          message,
+          boardId,
+          actions,
+          selectedIssue,
+          moves,
+          controller.signal,
+        );
       };
       nextSocket.onerror = () => {
         if (active) setConnection("connecting");
@@ -122,7 +113,7 @@ export function useBoardRealtime(state: DashboardState) {
       .then(([sections, issues]) => {
         if (!active || receivedSnapshot) return;
         setSections(sections.sections ?? []);
-        setIssues(issues.issues ?? []);
+        setIssues(preservePendingMoves(issues.issues ?? [], moves));
       })
       .catch((cause) => {
         if (active && !receivedSnapshot) setError(messageOf(cause));
@@ -135,15 +126,18 @@ export function useBoardRealtime(state: DashboardState) {
       active = false;
       controller.abort();
       window.clearTimeout(reconnectTimer);
-      socket.current?.close();
-      socket.current = null;
-      for (const move of moves.values()) window.clearTimeout(move.timer);
+      socket?.close();
+      for (const move of moves.values()) move.controller.abort();
       moves.clear();
     };
   }, [
     signedIn,
     boardId,
-    actions,
+    setActiveUsers,
+    setIssueComments,
+    setIssueAssignments,
+    setSelectedIssueId,
+    setBoards,
     setConnection,
     setSections,
     setIssues,
@@ -151,5 +145,8 @@ export function useBoardRealtime(state: DashboardState) {
     setLoadingBoard,
   ]);
 
-  return { moveIssue: useIssueMover(state, socket, pendingMoves) };
+  return {
+    moveIssue: (issueId: string, targetSectionId: string) =>
+      createIssueMover(state, pendingMoves)(issueId, targetSectionId),
+  };
 }

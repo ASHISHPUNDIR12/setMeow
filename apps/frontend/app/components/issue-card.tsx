@@ -9,6 +9,7 @@ type IssueCardProps = {
   sectionCount: number;
   sections: Section[];
   dragging: boolean;
+  saving: boolean;
   onDragStart: (issue: Issue, dataTransfer: DataTransfer) => void;
   onDragEnd: () => void;
   onOpen: (issue: Issue) => void;
@@ -28,6 +29,7 @@ export function IssueCard({
   sectionCount,
   sections,
   dragging,
+  saving,
   onDragStart,
   onDragEnd,
   onOpen,
@@ -43,6 +45,7 @@ export function IssueCard({
     <article
       className={`cursor-grab p-3 transition duration-150 hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-[0_4px_10px_rgba(0,0,0,0.2)] active:cursor-grabbing motion-reduce:transform-none motion-reduce:transition-none rounded-2xl border border-white/95 bg-[#fffefa] shadow-clay-sm dark:border-line dark:bg-[#343128] dark:shadow-[0_3px_8px_rgba(0,0,0,0.16)] ${dragging ? "opacity-50" : ""}`}
       draggable
+      aria-busy={saving}
       onDragStart={(event) => onDragStart(issue, event.dataTransfer)}
       onDragEnd={onDragEnd}
     >
@@ -73,7 +76,17 @@ export function IssueCard({
       )}
       <div className="mt-3.5 flex items-center justify-between border-t border-[#f0ede3] pt-2 dark:border-line">
         <span className="text-[8px] font-bold tracking-[0.06em] text-[#aaa595]">
-          {issue.id.slice(0, 7).toUpperCase()}
+          {saving ? (
+            <span className="inline-flex items-center gap-1.5" role="status">
+              <span
+                aria-hidden="true"
+                className="size-2.5 animate-spin rounded-full border border-current border-t-transparent motion-reduce:animate-none"
+              />
+              Saving…
+            </span>
+          ) : (
+            issue.id.slice(0, 7).toUpperCase()
+          )}
         </span>
         <label className="relative flex min-h-9 min-w-9 items-center justify-center rounded-lg text-[11px] max-sm:min-h-11 max-sm:min-w-11 text-[#9a927b] hover:text-[#7f6a2c]">
           <span className="sr-only">Move {issue.title}</span>

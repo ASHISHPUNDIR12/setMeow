@@ -1,6 +1,13 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef } from "react";
+export function ActionSpinner() {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-block size-3 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none"
+    />
+  );
+}
 
 export function ThemeToggle({
   theme,
@@ -46,87 +53,5 @@ export function Avatar({
     >
       {initials}
     </span>
-  );
-}
-
-export function Modal({
-  title,
-  close,
-  children,
-}: {
-  title: string;
-  close: () => void;
-  children: ReactNode;
-}) {
-  const dialogRef = useRef<HTMLElement>(null);
-  const closeRef = useRef(close);
-  useEffect(() => {
-    closeRef.current = close;
-  }, [close]);
-  useEffect(() => {
-    const previous =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    const dialog = dialogRef.current;
-    const focusable = () =>
-      Array.from(
-        dialog?.querySelectorAll<HTMLElement>(
-          "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex='0']",
-        ) ?? [],
-      );
-    focusable()[0]?.focus();
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        closeRef.current();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const items = focusable();
-      if (!items.length) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      if (previous?.isConnected) previous.focus();
-    };
-  }, []);
-  return (
-    <div
-      className="fixed inset-0 z-20 grid place-items-center overscroll-contain overflow-y-auto bg-stone-900/15 p-6 backdrop-blur-[2px] dark:bg-black/60 max-sm:items-end max-sm:p-2.5 max-sm:pb-[max(0.625rem,env(safe-area-inset-bottom))]"
-      onMouseDown={(event) => event.target === event.currentTarget && close()}
-    >
-      <section
-        ref={dialogRef}
-        className="max-h-[min(90dvh,850px)] min-w-0 w-full max-w-[490px] overscroll-contain overflow-y-auto rounded-3xl border border-line bg-surface p-6 shadow-modal max-sm:max-h-[calc(100dvh-2rem)] max-sm:p-5"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        tabIndex={-1}
-      >
-        <div className="flex items-start justify-between gap-4">
-          <h2 className="min-w-0 text-[21px] font-semibold tracking-tight [overflow-wrap:anywhere]">
-            {title}
-          </h2>
-          <button
-            className="inline-grid size-8 max-sm:size-11 shrink-0 cursor-pointer place-items-center rounded-xl border-0 bg-transparent p-0 text-[22px] leading-none text-[#817c6c] hover:bg-[#f2eedf] dark:hover:bg-[#383429]"
-            onClick={close}
-            aria-label="Close"
-          >
-            ×
-          </button>
-        </div>
-        {children}
-      </section>
-    </div>
   );
 }
